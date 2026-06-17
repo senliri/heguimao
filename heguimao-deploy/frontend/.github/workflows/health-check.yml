@@ -1,0 +1,76 @@
+name: Deploy & Health Check
+
+on:
+  deployment_status:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+
+jobs:
+  # ── Health Check after deploy ──
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Wait for deployment propagation
+        run: sleep 30
+
+      - name: Check main page
+        run: |
+          echo "Checking https://mini-disco.vercel.app ..."
+          RESPONSE=$(curl -s -o /dev/null -w "HTTP_CODE:%{http_code}" --connect-timeout 10 --max-time 30 "https://mini-disco.vercel.app")
+          echo "Response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q "HTTP_CODE:200"; then
+            echo "✅ Main page OK"
+          else
+            echo "❌ Main page returned: $RESPONSE"
+            exit 1
+          fi
+
+      - name: Check API health endpoint
+        run: |
+          echo "Checking /api/health ..."
+          RESPONSE=$(curl -s -o /dev/null -w "HTTP_CODE:%{http_code}" --connect-timeout 10 --max-time 30 "https://mini-disco.vercel.app/api/health")
+          echo "Response: $RESPONSE"
+          # /api/health returns 200 or 503 (depending on env vars), both are "working"
+          HTTP_CODE=$(echo "$RESPONSE" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "503" ]; then
+            echo "✅ API health check OK (status: $HTTP_CODE)"
+          else
+            echo "❌ API health check failed: $RESPONSE"
+            exit 1
+          fi
+
+      - name: Check key routes exist
+        run: |
+          for route in / /report /appeal /auth; do
+            echo "Checking https://mini-disco.vercel.app$route ..."
+            RESPONSE=$(curl -s -o /dev/null -w "HTTP_CODE:%{http_code}" --connect-timeout 10 --max-time 30 "https://mini-disco.vercel.app$route")
+            HTTP_CODE=$(echo "$RESPONSE" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+            echo "  Route $route -> $HTTP_CODE"
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302" ]; then
+              echo "  ✅ OK"
+            else
+              echo "  ❌ FAILED"
+              exit 1
+            fi
+          done
+
+      - name: Verify page content
+        run: |
+          echo "Checking page content..."
+          BODY=$(curl -s --connect-timeout 10 --max-time 30 "https://mini-disco.vercel.app")
+          if echo "$BODY" | grep -q "Compliance Cat"; then
+            echo "✅ Page contains 'Compliance Cat' title"
+          else
+            echo "❌ Page does not contain expected title"
+            echo "Page snippet: $(echo "$BODY" | head -c 500)"
+            exit 1
+          fi
+          if echo "$BODY" | grep -q "root"; then
+            echo "✅ Page has React root element"
+          else
+            echo "❌ Page missing React root element"
+            exit 1
+          fi

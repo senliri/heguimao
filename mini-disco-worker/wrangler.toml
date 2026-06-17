@@ -1,0 +1,22 @@
+name = "mini-disco-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Routes (register subdomain first at https://dash.cloudflare.com/workers/playground)
+# routes = ["*.mini-disco-api.workers.dev"]
+
+# Logs to Cloudflare dashboard
+observability.logs.enabled = true
+
+# Variables
+[[env.production.vars]]
+AGNES_API_KEY = "your-agnes-api-key-here"
+AUTH_PASSWORD = ""
+AGNES_API_URL = "https://apihub.agnes-ai.com/v1/chat/completions"
+AGNES_MODEL = "agnes-2.0-flash"
+
+# KV namespace for caching responses
+[[kv_namespaces]]
+binding = "CHAT_CACHE"
+id = "1b9e76a642ed4c29aba84a8198b9ba85"

@@ -1,0 +1,61 @@
+# OpenClaw workspace files
+*.md
+!.gitignore
+
+# Node modules
+node_modules/
+
+# Root-level config files (mini-disco/ has its own)
+package-lock.json
+package.json
+tsconfig*.json
+vercel.json
+eslint.config.js
+playwright.config.ts
+postcss.config.js
+sst.config.ts
+tailwind.config.ts
+vite.config.ts
+
+# Skills
+skills/
+
+# Memory
+memory/
+
+# Temp files
+*.bak.*
+*.log
+*.json
+
+# .openclaw / .qclaw dirs
+.openclaw/
+.qclaw-version
+.consolidate-state.json
+
+# Other projects (only mini-disco should be committed)
+ab-test-landing-page/
+autobid-system/
+n8n-workspace/
+check_domains.js
+send_marketing.js
+test_cuisinart.js
+test_email.js
+verify_emails.js
+verify_emails.ps1
+domain_check.json
+verified_emails.json
+email-marketing-plan.md
+email-templates.md
+verification-report.md
+task-2026-06-14-e2e-p1-fix.md
+task-summary_2026-06-15_1455.md
+
+# Allow mini-disco to have its own files
+!mini-disco/package.json
+!mini-disco/package-lock.json
+!mini-disco/tsconfig*.json
+!mini-disco/vercel.json
+!mini-disco/*.md
+!mini-disco/*.config.*
+!mini-disco/*.json

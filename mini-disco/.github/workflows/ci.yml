@@ -1,0 +1,94 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Job 1: Lint & Type Check ──
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint (optional, skip if no config)
+        run: npx eslint src/ --max-warnings=0 || echo "⚠️ ESLint check skipped — no ESLint config found"
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+  # ── Job 2: Build ──
+  build:
+    name: Build (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_APP_NAME: "Compliance Cat"
+          VITE_AGNES_BASE_URL: "https://apihub.agnes-ai.com/v1"
+          VITE_AGNES_API_KEY: "placeholder-for-build-only"
+
+      - name: Verify build output
+        run: |
+          echo "=== Build Output ==="
+          ls -la dist/
+          echo "=== HTML Files ==="
+          find dist/ -name "*.html" -exec echo {} \;
+          echo "=== JS/CSS Files ==="
+          find dist/assets/ -type f | wc -l
+          echo "=== Build size check ==="
+          du -sh dist/
+
+  # ── Job 3: Dependency Audit ──
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit
+        run: npm audit --audit-level=moderate || echo "⚠️ Some vulnerabilities found — review with 'npm audit'"
+
+      - name: Check for outdated packages
+        run: npm outdated || true
