@@ -42,6 +42,10 @@ export function AuthPage() {
       
       if (mode === "register") {
         result = await registerUser(email, password, name);
+        if (result.success) {
+          // Auto-login after registration
+          result = await loginUser(email, password);
+        }
       } else if (mode === "reset-request") {
         result = await requestPasswordReset(email);
         if (result.success) {

@@ -1,15 +1,14 @@
-﻿// AI Agent core logic — calls Cloudflare Worker in prod, Agnes API directly in dev
+// AI Agent core logic — calls Cloudflare Worker in prod, Agnes API directly in dev
 
 import { PROFILE_EXTRACTION_PROMPT, DIAGNOSIS_PROMPT, APPEAL_PROMPT, SHORT_REPLY_PROMPT } from "./prompts";
 import { cache } from "./store";
 import { categoryComplianceData } from "../data/site";
 
-// Cloudflare Worker URL (set via env var, falls back to default)
-// NOTE: If Worker is unavailable, frontend will call Agnes API directly
-const CLOUDFLARE_WORKER_URL = import.meta.env.VITE_WORKER_URL || "https://heguimao-api.senliri028.workers.dev";
-const IS_DEV = import.meta.env.DEV;
+// Agent API config — frontend calls Agnes API directly
+// API key injected via Cloudflare Pages environment variable
+const AGNES_API_URL = import.meta.env.VITE_AGNES_API_URL || "https://apihub.agnes-ai.com/v1/chat/completions";
 const AGNES_MODEL = import.meta.env.VITE_AGNES_MODEL || "agnes-2.0-flash";
-const AGNES_API_KEY = import.meta.env.VITE_AGNES_API_KEY || "sk-LgcxeEG9Qz6kCipH6mzmm9kkWj9J4gFla8FsV2qjzXhB8y8F";
+const AGNES_API_KEY = import.meta.env.VITE_AGNES_API_KEY || "";
 
 // ============================================
 // Product Feature Keyword Dictionary
@@ -496,94 +495,42 @@ export interface ShortReplyResult {
 async function callAI<T>(endpoint: string, params: Record<string, unknown>): Promise<T> {
   try {
     const API_KEY = import.meta.env.VITE_AGNES_API_KEY;
-    const MODEL = import.meta.env.VITE_AGNES_MODEL || "agnes-2.0-flash";
-    const isDev = import.meta.env.DEV;
+    const MODEL = import.meta.env.VITE_AGNES_MODEL || 'agnes-2.0-flash';
     
     let reply: string;
     
-    // In dev: use /v1 proxy to avoid CORS; In prod: go through Cloudflare Worker
-    const API_URL = isDev && API_KEY ? "/v1/chat/completions" : CLOUDFLARE_WORKER_URL;
-    
-    if (isDev && API_KEY) {
-      console.warn("[Agent] Calling API via proxy:", API_URL);
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: params.prompt as string || "" },
-            { role: "user", content: (params.message as string) || "" }
-          ],
-          temperature: 0.3,
-        }),
-      });
+    // Frontend calls Agnes API directly (Worker + Vercel both down)
+    // API key injected via Cloudflare Pages env var (VITE_AGNES_API_KEY)
+    console.warn('[Agent] Calling Agnes API directly:', AGNES_API_URL);
+    const response = await fetch(AGNES_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: params.prompt as string || '' },
+          { role: 'user', content: (params.message as string) || '' }
+        ],
+        temperature: 0.3,
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.warn("AI API call failed:", response.status, errorText);
-        throw new Error("AI service temporarily unavailable");
-      }
-
-      const data = await response.json();
-      reply = data.choices?.[0]?.message?.content || data.reply || "";
-    } else {
-      // Production: Try Cloudflare Worker first, fallback to direct API call
-      let response;
-      let workerFailed = false;
-      
-      try {
-        response = await fetch(CLOUDFLARE_WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: endpoint, ...params }),
-          signal: AbortSignal.timeout(5000), // 5s timeout
-        });
-        
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      } catch (err) {
-        console.warn("[Agent] Worker unavailable, calling Agnes API directly:", err);
-        workerFailed = true;
-        
-        // Fallback: Call Agnes API directly
-        response = await fetch("https://apihub.agnes-ai.com/v1/chat/completions", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${AGNES_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: AGNES_MODEL,
-            messages: [
-              { role: "system", content: params.prompt as string || "" },
-              { role: "user", content: (params.message as string) || "" }
-            ],
-            temperature: 0.3,
-          }),
-        });
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.warn("AI API call failed:", response.status, errorText);
-        throw new Error("AI service temporarily unavailable");
-      }
-
-      const data = await response.json();
-      reply = data.reply || "";
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn('[Agent] Agnes API call failed:', response.status, errorText);
+      throw new Error('AI service temporarily unavailable');
     }
 
-    if (!reply) {
-      throw new Error("AI returned empty response");
-    }
-
+    const data = await response.json();
+    reply = data.choices?.[0]?.message?.content || data.reply || '';
     return parseAIResponse<T>(reply);
   } catch (err) {
-    console.warn("AI call failed:", err);
-    throw new Error("AI service temporarily unavailable, please try again.");
+    console.warn('AI call failed:', err);
+    throw new Error('AI service temporarily unavailable, please try again.');
   }
 }
 
@@ -596,7 +543,7 @@ function parseAIResponse<T>(text: string): T {
   // Try to parse as-is first (might be pure JSON)
   try {
     const parsed = JSON.parse(cleaned);
-    return sanitize(parsed) as T;
+    return sanitizeNested(parsed) as T;
   } catch {
     // Not pure JSON, try to extract from text
   }
@@ -615,7 +562,7 @@ function parseAIResponse<T>(text: string): T {
     
     // Case 1: Already in the expected flat format
     if (obj.summary !== undefined && obj.recommendations !== undefined) {
-      return sanitize(obj);
+      return sanitizeNested(obj);
     }
     
     // Case 2: Single-key wrapper (e.g. { compliance_diagnosis: {...} })
@@ -705,7 +652,34 @@ function parseAIResponse<T>(text: string): T {
     return result;
   }
   
-  return normalizeDiagnosis(parsed) as T;
+  // Final safety check: ensure recommendations exists
+  function ensureRecommendations(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(ensureRecommendations);
+    
+    const result = { ...obj };
+    if (result.recommendations === undefined) {
+      // Try to find any array that looks like recommendations
+      for (const [key, value] of Object.entries(result)) {
+        if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+          // Check if any item in the array has typical recommendation fields
+          const sample = value[0];
+          if (sample.name || sample.category || sample.title || sample.severity || sample.required) {
+            result.recommendations = value;
+            delete result[key];
+            break;
+          }
+        }
+      }
+      // If still no recommendations, provide a safe default
+      if (result.recommendations === undefined) {
+        result.recommendations = [];
+      }
+    }
+    return result;
+  }
+  
+  return ensureRecommendations(normalizeDiagnosis(parsed)) as T;
 }
 
 // ============================================
