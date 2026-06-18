@@ -256,9 +256,9 @@ export function Appeal() {
                 disabled={!reviewNotice.trim() || analyzing}
                 className="flex items-center gap-2 rounded-xl bg-cyan-600 py-2.5 px-5 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
               >
-                <span className="relative inline-flex h-4 w-4 align-middle">
-                  <Loader2 className="h-4 w-4 animate-spin" style={{ display: analyzing ? 'block' : 'none' }} />
-                  <ScanEye className="h-4 w-4" style={{ display: analyzing ? 'none' : 'block' }} />
+                <span className="relative inline-flex h-4 w-4 items-center justify-center align-middle">
+                  <Loader2 className={`h-4 w-4 ${analyzing ? 'animate-spin' : 'opacity-0'}`} />
+                  <ScanEye className={`h-4 w-4 absolute inset-0 ${analyzing ? 'opacity-0' : 'opacity-100'}`} />
                 </span>
                 {analyzing ? "Analyzing..." : "Analyze Review Notice"}
               </button>
@@ -418,9 +418,9 @@ export function Appeal() {
                     disabled={!productType || !reason || isGenerating}
                     className="flex-1 rounded-xl bg-purple-600 py-2.5 text-sm font-medium text-white transition hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2 w-full"
                   >
-                    <span className="relative inline-flex h-4 w-4 align-middle">
-                      <Loader2 className="h-4 w-4 animate-spin" style={{ display: isGenerating ? 'block' : 'none' }} />
-                      <Sparkles className="h-4 w-4" style={{ display: isGenerating ? 'none' : 'block' }} />
+                    <span className="relative inline-flex h-4 w-4 items-center justify-center align-middle">
+                      <Loader2 className={`h-4 w-4 ${isGenerating ? 'animate-spin' : 'opacity-0'}`} />
+                      <Sparkles className={`h-4 w-4 absolute inset-0 ${isGenerating ? 'opacity-0' : 'opacity-100'}`} />
                     </span>
                     {isGenerating ? "Generating..." : "Generate Appeal Letter"}
                   </button>
@@ -446,9 +446,9 @@ export function Appeal() {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xs font-semibold text-amber-300">🔍 Pre-submission Review</h4>
                       <button onClick={handlePreReview} disabled={preReviewing} className="text-xs bg-amber-600/30 text-amber-300 hover:bg-amber-600/50 px-2 py-1 rounded transition disabled:opacity-50 flex items-center gap-1">
-                        <span className="relative inline-flex h-3 w-3 align-middle">
-                          <Loader2 className="h-3 w-3 animate-spin" style={{ display: preReviewing ? 'block' : 'none' }} />
-                          <Shield className="h-3 w-3" style={{ display: preReviewing ? 'none' : 'block' }} />
+                        <span className="relative inline-flex h-3 w-3 items-center justify-center align-middle">
+                          <Loader2 className={`h-3 w-3 ${preReviewing ? 'animate-spin' : 'opacity-0'}`} />
+                          <Shield className={`h-3 w-3 absolute inset-0 ${preReviewing ? 'opacity-0' : 'opacity-100'}`} />
                         </span>
                         {preReviewing ? "Reviewing..." : "Review POA"}
                       </button>

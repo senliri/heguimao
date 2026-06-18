@@ -260,9 +260,9 @@ export function Home() {
                   disabled={!input.trim() || isAnalyzing}
                   className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 shrink-0"
                 >
-                  <span className="relative inline-flex h-4 w-4 align-middle">
-                    <Loader2 className="h-4 w-4 animate-spin" style={{ display: isAnalyzing ? "block" : "none" }} />
-                    <Sparkles className="h-4 w-4" style={{ display: isAnalyzing ? "none" : "block" }} />
+                  <span className="relative inline-flex h-4 w-4 items-center justify-center align-middle">
+                    <Loader2 className={`h-4 w-4 ${isAnalyzing ? "animate-spin" : "opacity-0"}`} />
+                    <Sparkles className={`h-4 w-4 absolute inset-0 ${isAnalyzing ? "opacity-0" : "opacity-100"}`} />
                   </span>
                   {isAnalyzing ? "Analyzing..." : "Analyze"}
                 </button>

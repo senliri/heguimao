@@ -54,6 +54,10 @@ export function AuthPage() {
       
       if (mode === "register") {
         result = await registerUser(email, password, name);
+        if (result.success) {
+          // Auto-login after registration
+          result = await loginUser(email, password);
+        }
       } else if (mode === "reset-request") {
         result = await requestPasswordReset(email);
         if (result.success) {
@@ -81,13 +85,13 @@ export function AuthPage() {
       }
 
       if (result.success && result.user) {
-        setSuccess(mode === "register" ? "Registration successful! Logging you in..." : "Login successful!");
+        setSuccess("Login successful!");
         
         // Redirect to home (SPA navigation, no page refresh)
         // Small delay to show success message, then navigate
         setTimeout(() => {
           navigate("/", { replace: true });
-        }, 500);
+        }, mode === "register" ? 1000 : 500);
       } else {
         setError(result.error || "Authentication failed");
       }
