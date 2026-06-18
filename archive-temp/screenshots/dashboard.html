@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合规猫 - 仪表盘</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #e0e0e0; }
+.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: rgba(15,15,30,0.95); border-right: 1px solid rgba(100,100,200,0.12); padding: 20px 0; }
+.sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 20px 20px; font-weight: bold; font-size: 16px; border-bottom: 1px solid rgba(100,100,200,0.1); margin-bottom: 16px; }
+.sidebar-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.menu-item { padding: 10px 20px; font-size: 13px; color: #7777aa; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.menu-item.active { color: #8b5cf6; background: rgba(139,92,246,0.08); border-right: 2px solid #8b5cf6; }
+.dashboard { margin-left: 220px; padding: 24px 32px; }
+.dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.dash-title { font-size: 20px; font-weight: bold; }
+.dash-date { color: #666; font-size: 12px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: rgba(20,20,40,0.7); border: 1px solid rgba(100,100,200,0.12); border-radius: 12px; padding: 18px; }
+.stat-label { font-size: 11px; color: #666; margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: bold; }
+.stat-value.purple { color: #8b5cf6; }
+.stat-value.green { color: #4ade80; }
+.stat-value.yellow { color: #fbbf24; }
+.stat-value.blue { color: #60a5fa; }
+.stat-sub { font-size: 11px; color: #555; margin-top: 4px; }
+.products { background: rgba(20,20,40,0.7); border: 1px solid rgba(100,100,200,0.12); border-radius: 12px; padding: 20px; }
+.products-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+.prod-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(100,100,200,0.08); }
+.prod-row:last-child { border-bottom: none; }
+.prod-info { display: flex; align-items: center; gap: 12px; }
+.prod-icon { width: 36px; height: 36px; background: rgba(100,100,200,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.prod-name { font-size: 13px; font-weight: 500; }
+.prod-sku { font-size: 11px; color: #555; }
+.prod-score { font-size: 13px; font-weight: 600; }
+.alerts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+.alert-card { background: rgba(20,20,40,0.7); border: 1px solid rgba(100,100,200,0.12); border-radius: 12px; padding: 18px; }
+.alert-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.alert-item { font-size: 12px; color: #888; padding: 6px 0; border-bottom: 1px solid rgba(100,100,200,0.06); }
+.alert-item:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-logo"><div class="sidebar-logo-icon">🐱</div><span>合规猫</span></div>
+  <div class="menu-item active">📊 仪表盘</div>
+  <div class="menu-item">🔍 产品检测</div>
+  <div class="menu-item">📄 合规报告</div>
+  <div class="menu-item">🛡️ 上诉指南</div>
+  <div class="menu-item">📁 产品档案</div>
+  <div class="menu-item">📢 监管更新</div>
+  <div class="menu-item">⭐ 会员中心</div>
+</div>
+<div class="dashboard">
+  <div class="dash-header">
+    <div class="dash-title">产品仪表盘</div>
+    <div class="dash-date">2026年6月18日</div>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-label">产品总数</div><div class="stat-value purple">12</div><div class="stat-sub">3个市场</div></div>
+    <div class="stat-card"><div class="stat-label">合规通过率</div><div class="stat-value green">87%</div><div class="stat-sub">↑ 12% 较上月</div></div>
+    <div class="stat-card"><div class="stat-label">待处理警报</div><div class="stat-value yellow">3</div><div class="stat-sub">1个紧急</div></div>
+    <div class="stat-card"><div class="stat-label">认证有效期</div><div class="stat-value blue">142天</div><div class="stat-sub">平均剩余</div></div>
+  </div>
+  <div class="products">
+    <div class="products-title">最近检测产品</div>
+    <div class="prod-row"><div class="prod-info"><div class="prod-icon">🎧</div><div><div class="prod-name">无线耳机 Pro</div><div class="prod-sku">SKU: BT-PRO-001</div></div></div><div class="prod-score" style="color:#4ade80">92/100</div></div>
+    <div class="prod-row"><div class="prod-info"><div class="prod-icon">🔋</div><div><div class="prod-name">移动电源 10000mAh</div><div class="prod-sku">SKU: PB-10K-002</div></div></div><div class="prod-score" style="color:#fbbf24">78/100</div></div>
+    <div class="prod-row"><div class="prod-info"><div class="prod-icon">🧸</div><div><div class="prod-name">儿童毛绒玩具</div><div class="prod-sku">SKU: TOY-C-003</div></div></div><div class="prod-score" style="color:#4ade80">95/100</div></div>
+    <div class="prod-row"><div class="prod-info"><div class="prod-icon">🧴</div><div><div class="prod-name">护肤精华液</div><div class="prod-sku">SKU: COS-M-004</div></div></div><div class="prod-score" style="color:#f87171">61/100</div></div>
+  </div>
+  <div class="alerts">
+    <div class="alert-card"><div class="alert-title">⚠️ 合规警报</div><div class="alert-item" style="color:#f87171">🔴 护肤精华 - CPNP 欧盟化妆品备案即将过期</div><div class="alert-item" style="color:#fbbf24">🟡 移动电源 - PSE 日本认证需更新</div><div class="alert-item" style="color:#fbbf24">🟡 无线耳机 - FCC ID 续期提醒</div></div>
+    <div class="alert-card"><div class="alert-title">📢 最新动态</div><div class="alert-item">欧盟新电池法规生效，移动电源需额外测试</div><div class="alert-item">FDA 更新化妆品成分清单</div><div class="alert-item">ASTM F963-26 儿童玩具标准更新</div></div>
+  </div>
+</div>
+</body>
+</html>

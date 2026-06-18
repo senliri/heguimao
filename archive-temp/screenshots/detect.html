@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合规猫 - 产品检测</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a1a; color: #e0e0e0; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 28px; background: rgba(20,20,40,0.95); border-bottom: 1px solid rgba(100,100,255,0.15); }
+.topbar-logo { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 16px; }
+.topbar-logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.topbar-links { display: flex; gap: 20px; font-size: 13px; }
+.topbar-links a { color: #8888aa; text-decoration: none; }
+.topbar-links a.active { color: #8b5cf6; }
+.main { max-width: 700px; margin: 40px auto; padding: 0 24px; }
+.card { background: rgba(20,20,40,0.7); border: 1px solid rgba(100,100,200,0.15); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 14px; font-weight: 600; color: #aaa; margin-bottom: 16px; }
+.input-group { display: flex; gap: 10px; margin-bottom: 16px; }
+.input-field { flex: 1; background: rgba(10,10,30,0.8); border: 1px solid rgba(100,100,200,0.25); border-radius: 10px; padding: 12px 16px; color: #e0e0e0; font-size: 14px; outline: none; }
+.input-field::placeholder { color: #555; }
+.btn-analyze { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 10px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.quick-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { background: rgba(100,100,200,0.1); border: 1px solid rgba(100,100,200,0.2); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: #9999cc; cursor: pointer; }
+.tag:hover { background: rgba(100,100,200,0.2); }
+.result-card { background: rgba(30,30,50,0.7); border: 1px solid rgba(100,100,200,0.2); border-radius: 14px; padding: 20px; }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.result-product { font-size: 18px; font-weight: bold; }
+.result-score { background: rgba(34,197,94,0.15); color: #4ade80; padding: 6px 14px; border-radius: 14px; font-size: 14px; font-weight: 600; }
+.result-list { display: flex; flex-direction: column; gap: 10px; }
+.result-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(10,10,30,0.5); border-radius: 8px; font-size: 13px; }
+.result-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.icon-pass { background: rgba(34,197,94,0.2); color: #4ade80; }
+.icon-warn { background: rgba(251,191,36,0.2); color: #fbbf24; }
+.icon-fail { background: rgba(248,113,113,0.2); color: #f87171; }
+.footer { text-align: center; color: #444; font-size: 11px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-logo"><div class="topbar-logo-icon">🐱</div><span>合规猫</span></div>
+  <div class="topbar-links"><a href="#">首页</a><a href="#" class="active">产品检测</a><a href="#">报告</a><a href="#">仪表盘</a></div>
+</div>
+<div class="main">
+  <div class="card">
+    <div class="card-title">输入产品信息开始检测</div>
+    <div class="input-group">
+      <input class="input-field" type="text" placeholder="例如：蓝牙耳机、充电宝、儿童玩具..." value="移动电源 10000mAh">
+      <button class="btn-analyze">开始检测</button>
+    </div>
+    <div class="quick-tags">
+      <span class="tag">🎧 无线耳机</span>
+      <span class="tag">🔋 移动电源</span>
+      <span class="tag">🧸 儿童玩具</span>
+      <span class="tag">🧴 护肤品</span>
+      <span class="tag">🧘 瑜伽垫</span>
+      <span class="tag">💡 LED灯</span>
+    </div>
+  </div>
+  <div class="result-card">
+    <div class="result-header">
+      <div class="result-product">🔋 移动电源 10000mAh</div>
+      <div class="result-score">✅ 82/100</div>
+    </div>
+    <div class="result-list">
+      <div class="result-item"><div class="result-icon icon-pass">✓</div><span>FCC 射频认证 <span style="color:#666;font-size:11px">美国</span></span></div>
+      <div class="result-item"><div class="result-icon icon-pass">✓</div><span>UN38.3 锂电池运输安全 <span style="color:#666;font-size:11px">国际</span></span></div>
+      <div class="result-item"><div class="result-icon icon-warn">!</div><span>CE 低电压指令 <span style="color:#666;font-size:11px">欧盟</span></span></div>
+      <div class="result-item"><div class="result-icon icon-fail">✗</div><span>PSE 日本电气安全 <span style="color:#666;font-size:11px">日本</span></span></div>
+      <div class="result-item"><div class="result-icon icon-pass">✓</div><span>IEC 62133 电池安全 <span style="color:#666;font-size:11px">国际</span></span></div>
+    </div>
+  </div>
+  <div class="footer">合规猫 Compliance Cat © 2026 · AI 驱动跨境电商合规检测</div>
+</div>
+</body>
+</html>
