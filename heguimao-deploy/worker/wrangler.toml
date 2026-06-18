@@ -1,0 +1,23 @@
+name = "heguimao-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Routes (using default *.workers.dev subdomain)
+# Uncomment and modify if you've added a custom domain in Cloudflare Dashboard
+# routes = ["*.your-domain.com/*"]
+
+# Logs to Cloudflare dashboard
+observability.logs.enabled = true
+
+# Environment Variables
+[vars]
+AGNES_API_KEY = "sk-LgcxeEG9Qz6kCipH6mzmm9kkWj9J4gFla8FsV2qjzXhB8y8F"
+AUTH_PASSWORD = ""
+AGNES_API_URL = "https://apihub.agnes-ai.com/v1/chat/completions"
+AGNES_MODEL = "agnes-2.0-flash"
+
+# Optional: KV namespace for caching (uncomment after creating one)
+# [[kv_namespaces]]
+# binding = "CHAT_CACHE"
+# id = "YOUR_KV_NAMESPACE_ID"

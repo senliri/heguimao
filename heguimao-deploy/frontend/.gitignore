@@ -1,0 +1,29 @@
+# Build output
+dist/
+.sst/
+node_modules/
+.vite/
+test-results/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Debug
+*.log
+
+# Backup
+*.bak.*
+
+# Local Netlify folder
+.netlify
+.vercel

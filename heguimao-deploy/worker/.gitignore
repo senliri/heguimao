@@ -1,0 +1,5 @@
+// .gitignore for Cloudflare Worker project
+node_modules/
+dist/
+.wrangler/
+.env.local
