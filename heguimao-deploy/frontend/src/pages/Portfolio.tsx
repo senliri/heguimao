@@ -93,7 +93,7 @@ export function Portfolio() {
     
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.subcategory.toLowerCase().includes(q));
+      result = result.filter(p => (p.name||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q) || (p.subcategory||'').toLowerCase().includes(q));
     }
     
     if (filterStatus !== "all") {
@@ -303,17 +303,17 @@ export function Portfolio() {
                     </span>
                   </div>
 
-                  {product.markets.length > 0 && (
+                  {(product.markets || []).length > 0 && (
                     <div className="mt-3 flex gap-1 flex-wrap">
-                      {product.markets.map(m => (
+                      {(product.markets || []).map(m => (
                         <span key={m} className="rounded-md bg-white/5 px-2 py-0.5 text-xs text-slate-300">{m.toUpperCase()}</span>
                       ))}
                     </div>
                   )}
 
-                  {product.certifications.length > 0 && (
+                  {(product.certifications || []).length > 0 && (
                     <div className="mt-3 space-y-1">
-                      {product.certifications.slice(0, 3).map((cert, i) => {
+                      {(product.certifications || []).slice(0, 3).map((cert, i) => {
                         let expiryBadge = null;
                         if (cert.status === "completed" && cert.expiryDate) {
                           const daysLeft = Math.ceil((new Date(cert.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));

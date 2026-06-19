@@ -27,7 +27,15 @@ const STORAGE_KEY = "compliance-cat-portfolio";
 function loadProducts(): PortfolioProduct[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Ensure each product has required fields
+    return parsed.map((p: any) => ({
+      ...p,
+      certifications: p.certifications || [],
+      complianceStatus: p.complianceStatus || "not-checked",
+    })) as PortfolioProduct[];
   } catch {
     return [];
   }
@@ -49,6 +57,7 @@ export function addPortfolioProduct(product: Omit<PortfolioProduct, "id" | "cert
   const products = loadProducts();
   const newProduct: PortfolioProduct = {
     ...product,
+    complianceStatus: product.complianceStatus || "not-checked",
     id: `prod_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
     certifications: [],
     createdAt: Date.now(),
@@ -107,7 +116,8 @@ export function getExpiryAlerts(daysAhead: number = 30): Array<{ product: Portfo
   const alerts: Array<{ product: PortfolioProduct; cert: Certification; daysLeft: number }> = [];
   
   for (const product of products) {
-    for (const cert of product.certifications) {
+    const certs = product?.certifications || [];
+    for (const cert of certs) {
       if (!cert.expiryDate || cert.status !== "completed") continue;
       const expiry = new Date(cert.expiryDate);
       const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

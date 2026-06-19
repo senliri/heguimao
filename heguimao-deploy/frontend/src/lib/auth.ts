@@ -172,7 +172,7 @@ export async function loginUser(email: string, password: string): Promise<{ succ
   
   // Update last login
   const updatedUsers = users.map(u => 
-    u.email === userRecord.email ? { ...u, createdAt: u.createdAt } : u
+    u.email === userRecord.email ? { ...u, lastLogin: Date.now() } : u
   );
   saveUsers(updatedUsers);
   

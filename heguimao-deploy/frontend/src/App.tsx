@@ -187,13 +187,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Suppress harmless DOM manipulation errors caused by browser extensions
-    // These errors don't affect functionality but create console noise
-    if (error.message?.includes('removeChild') || error.message?.includes('insertBefore')) {
-      return; // Silent ignore
-    }
-    
-    // Log full error details to console for debugging
+    // Log all errors including DOM manipulation errors for debugging
     console.error('[ErrorBoundary] Caught error:', error);
     console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
 

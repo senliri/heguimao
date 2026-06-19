@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle, User as UserIcon, ArrowLeft } from "lucide-react";
-import { registerUser, loginUser, requestPasswordReset, verifyResetToken, resetPassword, type User } from "../lib/auth";
+import { registerUser, loginUser, requestPasswordReset, verifyResetToken, resetPassword, type User, getSession } from "../lib/auth";
 
 type Mode = "login" | "register" | "reset-request" | "reset-password";
 
@@ -16,9 +16,21 @@ export function AuthPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [resetToken, setResetToken] = useState<string | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Check if user is already logged in, redirect if so
+  useEffect(() => {
+    const session = getSession();
+    if (session.isAuthenticated && session.user) {
+      navigate("/", { replace: true });
+      return;
+    }
+    setCheckingAuth(false);
+  }, [navigate]);
 
   // Check URL query params (not hash) for reset password token on mount
   useEffect(() => {
+    if (checkingAuth) return; // Wait for auth check
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
@@ -29,7 +41,7 @@ export function AuthPage() {
         setError("This reset link has expired or is invalid. Please request a new one.");
       }
     }
-  }, []);
+  }, [checkingAuth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +89,13 @@ export function AuthPage() {
         
         // Redirect to home (SPA navigation, no page refresh)
         // Show success message for 1.5s so user sees confirmation
-        setTimeout(() => {
+        setTimeout(async () => {
+          // Ensure session is committed to storage before navigating
+          const session = getSession();
+          if (!session.isAuthenticated) {
+            // Session not ready yet, force a small delay
+            await new Promise(r => setTimeout(r, 500));
+          }
           navigate("/", { replace: true });
         }, 1500);
       } else {
@@ -92,6 +110,12 @@ export function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+      {checkingAuth ? (
+        <div className="flex items-center gap-2 text-slate-400">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          Checking authentication...
+        </div>
+      ) : (
       <div className="w-full max-w-md">
         {/* Branding */}
         <div className="text-center mb-8">
@@ -150,19 +174,17 @@ export function AuthPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name field (register only) */}
-            {mode === "register" && (
-              <div className="relative">
-                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => { setName(e.target.value); setError(""); }}
-                  placeholder="Full name"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
-                  required
-                />
-              </div>
-            )}
+            <div className="relative" hidden={mode !== "register"}>
+              <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => { setName(e.target.value); setError(""); }}
+                placeholder="Full name"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
+                required={mode === "register"}
+              />
+            </div>
 
             {/* Email */}
             <div className="relative">
@@ -177,43 +199,37 @@ export function AuthPage() {
               />
             </div>
 
-            {/* Password (not shown for reset-request mode) */}
-            {mode !== "reset-request" && (
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                  placeholder="Password"
-                  className="w-full pl-10 pr-12 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
-                  required={mode !== "reset-request"}
-                  minLength={mode !== "reset-request" ? 6 : undefined}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            )}
+            {/* Password */}
+            <div className="relative" hidden={mode === "reset-request"}>
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                placeholder="Password"
+                className="w-full pl-10 pr-12 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
+                required={mode !== "reset-request"}
+                minLength={mode !== "reset-request" ? 6 : undefined}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
 
-            {/* Error/Success Messages */}
-            {error && (
-              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 px-4 py-3 rounded-xl">
-                <XCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+          {/* Error/Success Messages */}
+          <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 px-4 py-3 rounded-xl" hidden={!error}>
+            <XCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
 
-            {success && (
-              <div className="flex items-center gap-2 text-sm text-green-400 bg-green-500/10 px-4 py-3 rounded-xl">
-                <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{success}</span>
-              </div>
-            )}
+          <div className="flex items-center gap-2 text-sm text-green-400 bg-green-500/10 px-4 py-3 rounded-xl" hidden={!success}>
+            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{success}</span>
+          </div>
 
             {/* Submit Button */}
             <button
@@ -239,24 +255,20 @@ export function AuthPage() {
           </form>
 
           {/* Forgot password link (login mode only) */}
-          {mode === "login" && (
-            <div className="mt-4 text-right">
-              <button
-                type="button"
-                onClick={() => { setMode("reset-request"); setError(""); setSuccess(""); setEmail(""); }}
-                className="text-sm text-blue-400 hover:text-blue-300 transition"
-              >
-                Forgot password?
-              </button>
-            </div>
-          )}
+          <div className="mt-4 text-right" hidden={mode !== "login"}>
+            <button
+              type="button"
+              onClick={() => { setMode("reset-request"); setError(""); setSuccess(""); setEmail(""); }}
+              className="text-sm text-blue-400 hover:text-blue-300 transition"
+            >
+              Forgot password?
+            </button>
+          </div>
 
           {/* Password hint (register and reset-password only) */}
-          {(mode === "register" || mode === "reset-password") && (
-            <p className="text-xs text-slate-500 mt-4">
-              Password must be at least 6 characters long
-            </p>
-          )}
+          <p className="text-xs text-slate-500 mt-4" hidden={!(mode === "register" || mode === "reset-password")}>
+            Password must be at least 6 characters long
+          </p>
         </div>
 
         {/* Footer */}
@@ -264,6 +276,7 @@ export function AuthPage() {
           Powered by Agnes AI • Compliance Cat
         </p>
       </div>
+      )}
     </div>
   );
 }

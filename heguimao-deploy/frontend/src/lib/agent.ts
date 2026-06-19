@@ -6,8 +6,11 @@ import { categoryComplianceData } from "../data/site";
 
 // API proxy - frontend calls Cloudflare Worker (key hidden server-side)
 // API key injected via Cloudflare Pages environment variable
+// Dev mode: VITE_DIRECT_API=1 bypasses Worker and calls Agnes API directly
 const AGNES_PROXY_URL = import.meta.env.VITE_WORKER_URL || "https://heguimao-api.senliri028.workers.dev/api/chat";
 const AGNES_MODEL = import.meta.env.VITE_AGNES_MODEL || "agnes-2.0-flash";
+const AGNES_API_KEY = import.meta.env.VITE_AGNES_API_KEY || "";
+const USE_DIRECT_API = import.meta.env.VITE_DIRECT_API === "1";
 // ============================================
 // Product Feature Keyword Dictionary
 // Optimized for accuracy and reduced redundancy
@@ -491,14 +494,43 @@ export interface ShortReplyResult {
 // ============================================
 
 async function callAI<T>(endpoint: string, params: Record<string, unknown>): Promise<T> {
-  try {
-    // API key managed server-side in Worker (no key needed in frontend)
-    const MODEL = import.meta.env.VITE_AGNES_MODEL || 'agnes-2.0-flash';
-    
-    let reply: string;
-    
-    // Frontend calls Cloudflare Worker proxy (key hidden server-side)
-    console.warn('[Agent] Calling API via Worker proxy:', AGNES_PROXY_URL);
+  const MODEL = import.meta.env.VITE_AGNES_MODEL || 'agnes-2.0-flash';
+  let reply: string;
+
+  if (USE_DIRECT_API) {
+    // Direct mode: call Agnes API via Vite proxy (/v1 -> apihub.agnes-ai.com)
+    console.log('[Agent] Using direct API mode (Worker bypass)');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (AGNES_API_KEY) {
+      headers['Authorization'] = `Bearer ${AGNES_API_KEY}`;
+    }
+    const response = await fetch('/v1/chat/completions', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: params.prompt as string || '' },
+          { role: 'user', content: (params.message as string) || '' },
+        ],
+        temperature: 0.3,
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn('[Agent] Direct API call failed:', response.status, errorText);
+      throw new Error('AI service temporarily unavailable');
+    }
+
+    const data = await response.json();
+    reply = data.choices?.[0]?.message?.content || '';
+  } else {
+    // Worker proxy mode
+    console.log('[Agent] Calling API via Worker proxy:', AGNES_PROXY_URL);
     const response = await fetch(AGNES_PROXY_URL, {
       method: 'POST',
       headers: {
@@ -516,11 +548,9 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
 
     const data = await response.json();
     reply = data.reply || data.choices?.[0]?.message?.content || '';
-    return parseAIResponse<T>(reply);
-  } catch (err) {
-    console.warn('AI call failed:', err);
-    throw new Error('AI service temporarily unavailable, please try again.');
   }
+
+  return parseAIResponse<T>(reply);
 }
 
 function parseAIResponse<T>(text: string): T {

@@ -1,25 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Main Flow - AI Diagnosis', () => {
-  test.beforeEach(async ({ page }) => {
-    // Inject auth session before page load
-    await page.addInitScript(() => {
-      localStorage.setItem('compliance_cat_session', JSON.stringify({
-        user: { id: 'e2e-user', email: 'e2e@test.com', name: 'E2E User' },
-        token: 'e2e-token',
-        expiresAt: Date.now() + 86400000,
-      }));
-    });
-  });
-
   test('complete diagnosis flow', async ({ page }) => {
     await page.goto('/');
     
-    // Wait for home page to load
-    await expect(page.getByText('Tell me your product')).toBeVisible({ timeout: 5000 });
+    // Wait for home page to load - check for main heading
+    await expect(page.locator('h1', { hasText: /Compliance Check/i })).toBeVisible({ timeout: 5000 });
     
-    // Enter product description
-    const input = page.locator('input[type="text"]');
+    // Enter product description via the input field
+    const input = page.locator('input[type="text"]').first();
     await input.fill('Bluetooth headphones');
     await page.click('button[type="submit"]');
     
