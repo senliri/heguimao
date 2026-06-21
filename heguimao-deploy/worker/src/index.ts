@@ -207,7 +207,7 @@ async function callAgnesAPI(
 
   try {
     const timeoutController = new AbortController();
-    const timeoutId = setTimeout(() => timeoutController.abort(), 25000);
+    const timeoutId = setTimeout(() => timeoutController.abort(), 60000);
 
     const response = await fetch(apiURL, {
       method: 'POST',
