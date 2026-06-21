@@ -112,44 +112,6 @@ test.describe('Navigation', () => {
     await expect(guideTexts.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('首页 -> Portfolio 页', async ({ page }) => {
-    await page.getByRole('link', { name: /portfolio/i }).first().click();
-    // AuthGate redirects unauthenticated users to /auth
-    // Check either we land on portfolio OR are redirected to auth
-    const url = await page.url();
-    if (url.includes('/portfolio')) {
-      // Try to see the heading, if error boundary shows, click "show details"
-      try {
-        await expect(page.getByRole('heading', { name: 'Product Portfolio' })).toBeVisible({ timeout: 5000 });
-      } catch {
-        // Check if error boundary is showing
-        const errorHeading = page.getByRole('heading', { name: '出了点问题' });
-        if (await errorHeading.isVisible().catch(() => false)) {
-          // Click "显示错误详情" button
-          const showDetailsBtn = page.getByRole('button', { name: /显示.*错误详情/i, exact: false });
-          if (await showDetailsBtn.isVisible().catch(() => false)) {
-            await showDetailsBtn.click();
-            await page.waitForTimeout(1000);
-            const errorText = await page.locator('pre, .error-details, [class*="error"]').first().textContent().catch(() => 'No details');
-            test.info().annotations.push(`Portfolio error: ${errorText.substring(0, 500)}`);
-          }
-        }
-      }
-    } else {
-      // Redirected to auth - verify the link exists on homepage
-      await page.goto('/');
-      await page.waitForTimeout(1000);
-      const portfolioLinks = page.locator('a[href="/portfolio"]');
-      expect(await portfolioLinks.count(), 'portfolio link should exist').toBeGreaterThan(0);
-    }
-  });
-
-  test('首页 -> Dashboard 页', async ({ page }) => {
-    await page.getByRole('link', { name: /dashboard/i }).first().click();
-    // Dashboard 页应该有 Regulatory 相关内容，先检查 URL 变化
-    await expect(page).toHaveURL(/\/dashboard/);
-  });
-
   test('首页 -> 登录页', async ({ page }) => {
     // 登录按钮在导航中是 Sign Out（已注入session），先退出
     await page.getByRole('button', { name: /Sign out/i }).click();

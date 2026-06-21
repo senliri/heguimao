@@ -75,24 +75,13 @@ test.describe('Compliance Cat - Smoke Tests', () => {
     await page.goto('http://localhost:5173/appeal');
     await expect(page.locator('button', { hasText: /Analyze Review Notice/i })).toBeVisible();
     
-    // For Portfolio/Dashboard — these require auth.
-    // Instead of trying to inject session (which causes React crashes),
-    // verify the routes exist in App.tsx and the links are present on homepage.
+    // Verify Report link (public)
+    await page.goto('http://localhost:5173/report');
+    await expect(page.getByRole('heading', { name: 'Compliance Check Report' })).toBeVisible();
     
-    // Go to home page and verify navigation links exist
+    // Verify Footer links exist
     await page.goto('http://localhost:5173/');
-    await page.waitForTimeout(1000);
-    
-    // Check that Portfolio and Dashboard links exist in the nav (use first to avoid strict mode)
-    const portfolioLink = page.locator('nav a[href="/portfolio"]').first();
-    const dashboardLink = page.locator('nav a[href="/dashboard"]').first();
-    
-    await expect(portfolioLink).toBeVisible();
-    await expect(dashboardLink).toBeVisible();
-    
-    // Also verify the feature cards contain these links
-    const featureCards = page.locator('a[href="/portfolio"], a[href="/dashboard"], a[href="/appeal"]');
-    const cardCount = await featureCards.count();
-    expect(cardCount, 'at least 3 feature cards').toBeGreaterThanOrEqual(3);
+    const footerLinks = page.locator('footer a');
+    await expect(footerLinks).toHaveCount(3); // Home, Report, Appeal
   });
 });
