@@ -3,10 +3,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { Layout } from "./components/Layout";
 import { AuthProvider, AuthGate, useAuth } from "./components/AuthGate";
+// import { I18nProvider } from "./lib/i18n-context";
 import { Home } from "./pages/Home";
 import { Appeal } from "./pages/Appeal";
 import { Report } from "./pages/Report";
 import { AuthPage } from "./pages/AuthPage";
+import { Monitor } from "./pages/Monitor";
+import { Pricing } from "./pages/Pricing";
 
 // Lazy-loaded routes — reduces initial bundle size
 const Portfolio = React.lazy(() => import("./pages/Portfolio"));
@@ -121,47 +124,59 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <ErrorBoundary>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={
-              <ProtectedLayout>
-                <Layout><Home /></Layout>
-              </ProtectedLayout>
-            } />
-            <Route path="/report" element={
-              <ProtectedLayout>
-                <Layout><Report /></Layout>
-              </ProtectedLayout>
-            } />
-            <Route path="/appeal" element={
-              <ProtectedLayout>
-                <Layout><Appeal /></Layout>
-              </ProtectedLayout>
-            } />
-            <Route path="/portfolio" element={
-              <Suspense fallback={<PageLoader />}>
+      {/* <I18nProvider> */}
+        <ErrorBoundary>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={
                 <ProtectedLayout>
-                  <AuthGate>
-                    <Layout><Portfolio /></Layout>
-                  </AuthGate>
+                  <Layout><Home /></Layout>
                 </ProtectedLayout>
-              </Suspense>
-            } />
-            <Route path="/dashboard" element={
-              <Suspense fallback={<PageLoader />}>
+              } />
+              <Route path="/report" element={
                 <ProtectedLayout>
-                  <AuthGate>
-                    <Layout><Dashboard /></Layout>
-                  </AuthGate>
+                  <Layout><Report /></Layout>
                 </ProtectedLayout>
-              </Suspense>
-            } />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AuthProvider>
-      </ErrorBoundary>
+              } />
+              <Route path="/appeal" element={
+                <ProtectedLayout>
+                  <Layout><Appeal /></Layout>
+                </ProtectedLayout>
+              } />
+              <Route path="/monitor" element={
+                <ProtectedLayout>
+                  <Layout><Monitor /></Layout>
+                </ProtectedLayout>
+              } />
+              <Route path="/pricing" element={
+                <ProtectedLayout>
+                  <Layout><Pricing /></Layout>
+                </ProtectedLayout>
+              } />
+              <Route path="/portfolio" element={
+                <Suspense fallback={<PageLoader />}>
+                  <ProtectedLayout>
+                    <AuthGate>
+                      <Layout><Portfolio /></Layout>
+                    </AuthGate>
+                  </ProtectedLayout>
+                </Suspense>
+              } />
+              <Route path="/dashboard" element={
+                <Suspense fallback={<PageLoader />}>
+                  <ProtectedLayout>
+                    <AuthGate>
+                      <Layout><Dashboard /></Layout>
+                    </AuthGate>
+                  </ProtectedLayout>
+                </Suspense>
+              } />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AuthProvider>
+        </ErrorBoundary>
+      {/* </I18nProvider> */}
     </BrowserRouter>
   );
 }

@@ -11,15 +11,30 @@
  * - Optional KV cache (uncomment in wrangler.toml to enable)
  */
 
-// ─── Types ───────────────────────────────────────────────────────────
+import { JWT } from './jwt.js';
 
-// Type definitions removed for JS compatibility
-// Types are inferred at runtime
+interface User {
+  email: string;
+  passwordHash: string;
+  name: string;
+  createdAt: number;
+}
+
+interface AuthRequest {
+  action: 'register' | 'login' | 'verify' | 'logout';
+  email?: string;
+  password?: string;
+  name?: string;
+  token?: string;
+}
 
 // ─── Constants ──────────────────────────────────────────────────────
 
 const DEFAULT_AGNES_URL = 'https://apihub.agnes-ai.com/v1/chat/completions';
 const DEFAULT_MODEL = 'agnes-2.0-flash';
+const AVAILABLE_MODELS = [
+  { id: 'agnes-2.0-flash', object: 'model', created: 1718640000, owned_by: 'sapiens-ai' },
+];
 const RATE_LIMIT = 10;          // requests per window
 const RATE_WINDOW_MS = 60_000;  // 1 minute
 const CLEANUP_INTERVAL_MS = 300_000; // 5 minutes
@@ -109,6 +124,154 @@ function sha256Sync(text: string): string {
 }
 
 // ─── Request Handlers ───────────────────────────────────────────────
+
+async function handleAuthAPI(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  
+  // Parse request body
+  let body: AuthRequest;
+  try {
+    // Use request.json() directly for simpler parsing
+    body = await request.json() as AuthRequest;
+  } catch {
+    return jsonResponse({ error: 'Invalid request body' }, 400);
+  }
+  
+  // Get KV namespace
+  const kv = (env as any).USER_DB;
+  if (!kv) {
+    return jsonResponse({ error: 'User database not configured' }, 503);
+  }
+  
+  try {
+    if (body.action === 'register') {
+      // Registration
+      if (!body.email || !body.password || !body.name) {
+        return jsonResponse({ error: 'All fields are required' }, 400);
+      }
+      
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+        return jsonResponse({ error: 'Invalid email format' }, 400);
+      }
+      
+      // Validate password strength
+      if (body.password.length < 6) {
+        return jsonResponse({ error: 'Password must be at least 6 characters' }, 400);
+      }
+      
+      // Check if user exists
+      const existing = await kv.get(body.email.toLowerCase());
+      if (existing) {
+        return jsonResponse({ error: 'Email already registered' }, 409);
+      }
+      
+      // Hash password
+      const passwordHash = await sha256(body.password);
+      
+      // Create user object
+      const user: User = {
+        email: body.email.toLowerCase(),
+        passwordHash,
+        name: body.name.trim(),
+        createdAt: Date.now()
+      };
+      
+      // Store in KV
+      await kv.put(body.email.toLowerCase(), JSON.stringify(user));
+      
+      // Generate JWT token
+      const token = await JWT.sign(
+        { userId: user.email, name: user.name },
+        env.JWT_SECRET || 'default-secret-change-in-production'
+      );
+      
+      return jsonResponse({ 
+        success: true, 
+        user: { email: user.email, name: user.name, createdAt: user.createdAt },
+        token 
+      });
+      
+    } else if (body.action === 'login') {
+      // Login
+      if (!body.email || !body.password) {
+        return jsonResponse({ error: 'Email and password are required' }, 400);
+      }
+      
+      // Get user
+      const userStr = await kv.get(body.email.toLowerCase());
+      if (!userStr) {
+        return jsonResponse({ error: 'Invalid email or password' }, 401);
+      }
+      
+      const user: User = JSON.parse(userStr);
+      
+      // Verify password
+      const passwordHash = await sha256(body.password);
+      if (user.passwordHash !== passwordHash) {
+        return jsonResponse({ error: 'Invalid email or password' }, 401);
+      }
+      
+      // Generate JWT token
+      const token = await JWT.sign(
+        { userId: user.email, name: user.name },
+        env.JWT_SECRET || 'default-secret-change-in-production'
+      );
+      
+      return jsonResponse({ 
+        success: true, 
+        user: { email: user.email, name: user.name, createdAt: user.createdAt },
+        token 
+      });
+      
+    } else if (body.action === 'verify') {
+      // Verify token
+      if (!body.token) {
+        return jsonResponse({ error: 'Token required' }, 400);
+      }
+      
+      // Verify JWT token
+      const payload = await JWT.verify(
+        body.token,
+        env.JWT_SECRET || 'default-secret-change-in-production'
+      );
+      
+      // Get user from KV
+      const userStr = await kv.get(payload.userId);
+      if (!userStr) {
+        return jsonResponse({ error: 'User not found' }, 404);
+      }
+      
+      const user: User = JSON.parse(userStr);
+      return jsonResponse({ 
+        success: true, 
+        user: { email: user.email, name: user.name, createdAt: user.createdAt }
+      });
+    }
+    
+    return jsonResponse({ error: 'Invalid action' }, 400);
+    
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return jsonResponse({ error: `Server error: ${message}` }, 500);
+  }
+}
+
+function generateAuthToken(user: User): string {
+  // Simple token generation (in production, use JWT)
+  const payload = `${user.email}:${user.createdAt}`;
+  return btoa(payload);
+}
+
+function decodeAuthToken(token: string): string | null {
+  try {
+    const decoded = atob(token);
+    const parts = decoded.split(':');
+    return parts[0] || null;
+  } catch {
+    return null;
+  }
+}
 
 function getIP(request: Request): string {
   return (
@@ -338,14 +501,27 @@ export default {
         status: 204,
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Max-Age': '86400',
         },
       });
     }
 
-    // Only allow POST
+    // Handle authentication API
+    const url = new URL(request.url);
+    // Support both /auth and /api/auth (frontend uses /api/auth)
+    const authPath = url.pathname.replace(/^\/api\//, '/');
+    if (authPath === '/auth' && request.method === 'POST') {
+      return handleAuthAPI(request, env);
+    }
+
+    // Handle GET /v1/models for health check
+    if (request.method === 'GET' && url.pathname === '/v1/models') {
+      return json_response({ object: 'list', data: AVAILABLE_MODELS });
+    }
+
+    // Only allow POST for chat API
     if (request.method !== 'POST') {
       return json_response({ error: 'Method not allowed' }, 405);
     }

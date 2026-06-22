@@ -31,8 +31,13 @@ if (typeof window !== 'undefined') {
   });
 }
 
+try {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
 );
+} catch (e) {
+  console.error('[FATAL RENDER ERROR]', e);
+  document.body.innerHTML = '<pre style="color:red;padding:20px;font-size:14px">FATAL RENDER ERROR:\n' + (e instanceof Error ? e.stack : String(e)) + '</pre>';
+}

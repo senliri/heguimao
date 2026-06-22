@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Package, Plus, Trash2, Search, Filter, Download, Clock, AlertCircle, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, Bell, OctagonAlert, Hourglass } from "lucide-react";
-import { getPortfolioProducts, deletePortfolioProduct, addPortfolioProduct, PortfolioProduct, Certification, addCertification, getExpiryAlerts } from "../lib/portfolio";
+import { getPortfolioProducts, deletePortfolioProduct, addPortfolioProduct, exportPortfolioCSV, PortfolioProduct, Certification, addCertification, getExpiryAlerts } from "../lib/portfolio";
 
 export function Portfolio() {
   const [products, setProducts] = useState<PortfolioProduct[]>(getPortfolioProducts());
@@ -157,7 +157,6 @@ export function Portfolio() {
           <div className="flex gap-2">
             <button
               onClick={() => {
-                const { exportPortfolioCSV } = require("../lib/portfolio");
                 const csv = exportPortfolioCSV();
                 const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
                 const url = URL.createObjectURL(blob);

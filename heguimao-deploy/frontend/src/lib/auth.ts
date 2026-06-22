@@ -1,11 +1,11 @@
-// User management module — simple localStorage-based auth (can be extended to backend)
+// User management module — hybrid localStorage + backend API auth
 
 export interface User {
-  id: string;
+  id?: string;
   email: string;
   name: string;
   createdAt: number;
-  lastLogin: number;
+  lastLogin?: number;
 }
 
 export interface AuthState {
@@ -16,6 +16,7 @@ export interface AuthState {
 
 const USERS_KEY = "compliance_cat_users";
 const SESSION_KEY = "compliance_cat_session";
+const AUTH_API_URL = "/api/auth";
 
 /**
  * Generate a simple unique ID
@@ -25,48 +26,129 @@ function generateId(): string {
 }
 
 /**
- * Enhanced password hashing using multiple rounds of SHA-256
- * Much stronger than simpleHash, though still not as strong as bcrypt
- * Note: For production use, implement bcrypt on the server side
- */
-async function enhancedHash(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  let data = encoder.encode(password);
-  
-  // Multiple rounds of hashing for increased security
-  for (let i = 0; i < 1000; i++) {
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    data = encoder.encode(hashArray.join('') + password);
-  }
-  
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-/**
- * Legacy simple hash for backward compatibility
- * @deprecated Use enhancedHash instead
+ * Legacy simple hash — used only for backward-compat migration check.
+ * DO NOT use for new passwords.
  */
 function simpleHash(password: string): string {
   let hash = 0;
   for (let i = 0; i < password.length; i++) {
     const char = password.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return hash.toString(16);
 }
 
 /**
+ * Hash a password using PBKDF2-SHA256 via Web Crypto API.
+ * Returns "pbkdf2_<base64salt>_<base64hash>" format.
+ *
+ * NOTE: localStorage-based auth is inherently less secure than server-side bcrypt.
+ * This improves things but does not eliminate risk. Consider migrating to a
+ * backend auth service for production.
+ */
+export async function enhancedHash(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const passwordBytes = encoder.encode(password);
+
+  // 16-byte random salt
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // 100,000 iterations of PBKDF2-SHA256 (OWASP recommended minimum)
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    passwordBytes,
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"],
+  );
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 100_000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    256, // 32 bytes = 256 bits
+  );
+
+  const hashBytes = new Uint8Array(derivedBits);
+  const b64Salt = btoa(String.fromCharCode(...salt)).replace(/=+$/, "");
+  const b64Hash = btoa(String.fromCharCode(...hashBytes)).replace(/=+$/, "");
+  return `pbkdf2_${b64Salt}_${b64Hash}`;
+}
+
+/**
+ * Check if a stored hash was produced by the old simpleHash (for migration detection).
+ */
+function isLegacyHash(hash: string): boolean {
+  // Old hashes are plain hex strings (e.g. "a3f2b1") — 4 to ~10 hex chars
+  return /^[0-9a-f]{4,16}$/i.test(hash);
+}
+
+/**
+ * Verify a password against a stored PBKDF2 hash.
+ * Extracts salt from the stored hash string and re-derives to compare.
+ */
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  try {
+    if (!storedHash.startsWith("pbkdf2_")) {
+      // Legacy hash — use simpleHash for comparison
+      return simpleHash(password) === storedHash;
+    }
+
+    const parts = storedHash.split("_");
+    if (parts.length !== 3) return false;
+
+    const [, b64Salt, b64StoredHash] = parts;
+    // Pad base64 if necessary (we stripped '=' during encoding)
+    const padSalt = b64Salt + "=".repeat((4 - b64Salt.length % 4) % 4);
+    const padHash = b64StoredHash + "=".repeat((4 - b64StoredHash.length % 4) % 4);
+    const salt = Uint8Array.from(atob(padSalt), c => c.charCodeAt(0));
+    const storedHashBytes = Uint8Array.from(atob(padHash), c => c.charCodeAt(0));
+
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"]
+    );
+    const derivedBits = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
+      keyMaterial, 256
+    );
+    const derivedHashBytes = new Uint8Array(derivedBits);
+
+    // Constant-time comparison to prevent timing attacks
+    if (derivedHashBytes.length !== storedHashBytes.length) return false;
+    let match = 0;
+    for (let i = 0; i < derivedHashBytes.length; i++) {
+      match |= derivedHashBytes[i] ^ storedHashBytes[i];
+    }
+    return match === 0;
+  } catch {
+    // If verification fails for any reason (bad hash format, crypto error), return false
+    return false;
+  }
+}
+
+/**
  * Get all registered users
  */
-export function getUsers(): Array<{ email: string; passwordHash: string; name: string; createdAt: number }> {
+export function getUsers(): Array<{ email: string; passwordHash?: string; name: string; createdAt: number }> {
   try {
     const data = localStorage.getItem(USERS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
+    console.log('[Auth] getUsers: raw localStorage data =', data);
+    if (!data) return [];
+    const users = JSON.parse(data);
+    // Data migration: ensure all users have required fields
+    return users.map(u => ({
+      email: u.email || '',
+      passwordHash: u.passwordHash || '',
+      name: u.name || '',
+      createdAt: u.createdAt || Date.now()
+    }));
+  } catch (e) {
+    console.error('[Auth] getUsers: error parsing users', e);
     return [];
   }
 }
@@ -74,8 +156,9 @@ export function getUsers(): Array<{ email: string; passwordHash: string; name: s
 /**
  * Save users array
  */
-function saveUsers(users: Array<{ email: string; passwordHash: string; name: string; createdAt: number }>): void {
+export function saveUsers(users: Array<{ email: string; passwordHash: string; name: string; createdAt: number }>): void {
   try {
+    console.log('[Auth] saveUsers: saving', users.length, 'users');
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
   } catch (e) {
     console.warn("Failed to save users:", e);
@@ -83,27 +166,81 @@ function saveUsers(users: Array<{ email: string; passwordHash: string; name: str
 }
 
 /**
- * Register a new user
- * Returns { success: true, user: User } or { success: false, error: string }
+ * Register a new user via backend API
  */
 export async function registerUser(email: string, password: string, name: string): Promise<{ success: boolean; user?: User; error?: string }> {
-  // Validation
-  if (!email || !password || !name) {
-    return { success: false, error: "All fields are required" };
+  try {
+    const response = await fetch(AUTH_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'register',
+        email,
+        password,
+        name
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Store JWT token and user info
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        user: data.user,
+        token: data.token,
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
+      }));
+      return { success: true, user: data.user as User };
+    } else {
+      return { success: false, error: data.error };
+    }
+  } catch (err) {
+    // Fallback to localStorage if backend is unavailable
+    console.warn('Backend auth unavailable, falling back to localStorage');
+    return fallbackRegisterUser(email, password, name);
   }
-  
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { success: false, error: "Invalid email format" };
+}
+
+/**
+ * Login via backend API
+ */
+export async function loginUser(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
+  try {
+    const response = await fetch(AUTH_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'login',
+        email,
+        password
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Store JWT token and user info
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        user: data.user,
+        token: data.token,
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
+      }));
+      return { success: true, user: data.user as User };
+    } else {
+      return { success: false, error: data.error };
+    }
+  } catch (err) {
+    // Fallback to localStorage if backend is unavailable
+    console.warn('Backend auth unavailable, falling back to localStorage');
+    return fallbackLoginUser(email, password);
   }
-  
-  if (password.length < 6) {
-    return { success: false, error: "Password must be at least 6 characters" };
-  }
-  
-  if (name.length < 2) {
-    return { success: false, error: "Name must be at least 2 characters" };
-  }
-  
+}
+
+/**
+ * Fallback localStorage-based registration (when backend is unavailable)
+ */
+async function fallbackRegisterUser(email: string, password: string, name: string): Promise<{ success: boolean; user?: User; error?: string }> {
+  // ... existing localStorage logic ...
   const users = getUsers();
   
   // Check if email already exists
@@ -130,43 +267,45 @@ export async function registerUser(email: string, password: string, name: string
   });
   saveUsers(users);
   
+  // Auto-login after registration
+  const sessionToken = generateId() + "_" + btoa(user.email + Date.now().toString()).slice(0, 16);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ user, token: sessionToken, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 }));
+  
   return { success: true, user };
 }
 
 /**
- * Login with email and password
- * Returns { success: true, user: User } or { success: false, error: string }
+ * Fallback localStorage-based login (when backend is unavailable)
  */
-export async function loginUser(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
-  if (!email || !password) {
-    return { success: false, error: "Email and password are required" };
-  }
-  
+async function fallbackLoginUser(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
+  // ... existing localStorage logic ...
   const users = getUsers();
-  const passwordHash = await enhancedHash(password);
-  const userRecord = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.passwordHash === passwordHash);
-  
+  const emailLower = email.toLowerCase();
+  let userRecord = users.find(u => u.email.toLowerCase() === emailLower);
+
+  if (userRecord) {
+    // Verify password against stored hash (supports both PBKDF2 and legacy)
+    const isValid = await verifyPassword(password, userRecord.passwordHash);
+    if (!isValid) {
+      userRecord = undefined;
+    }
+  }
+
+  // Backward compat: migrate legacy hash users
   if (!userRecord) {
-    // Also try legacy hash for backward compatibility
-    const legacyHash = simpleHash(password);
-    const legacyUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.passwordHash === legacyHash);
-    if (legacyUser) {
-      // Update to new hash
-      const updatedUsers = users.map(u => 
-        u.email === legacyUser.email ? { ...u, passwordHash } : u
+    const legacyMatch = users.find(u => u.email.toLowerCase() === emailLower && isLegacyHash(u.passwordHash));
+    if (legacyMatch) {
+      // Legacy user — upgrade their password to PBKDF2
+      const newHash = await enhancedHash(password);
+      const updatedUsers = users.map(u =>
+        u.email === legacyMatch.email ? { ...u, passwordHash: newHash } : u
       );
       saveUsers(updatedUsers);
-      const user: User = {
-        id: generateId(),
-        email: legacyUser.email,
-        name: legacyUser.name,
-        createdAt: legacyUser.createdAt,
-        lastLogin: Date.now(),
-      };
-      const token = generateId() + "_" + (await enhancedHash(user.email + Date.now()));
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ user, token, expiresAt: Date.now() + 24 * 60 * 60 * 1000 }));
-      return { success: true, user };
+      userRecord = legacyMatch;
     }
+  }
+
+  if (!userRecord) {
     return { success: false, error: "Invalid email or password" };
   }
   
@@ -184,14 +323,67 @@ export async function loginUser(email: string, password: string): Promise<{ succ
     createdAt: userRecord.createdAt,
     lastLogin: Date.now(),
   };
-  
 
-  
-  // Create session
-  const token = generateId() + "_" + (await enhancedHash(user.email + Date.now()));
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ user, token, expiresAt: Date.now() + 24 * 60 * 60 * 1000 }));
+  // Create session token
+  const sessionToken = generateId() + "_" + btoa(user.email + Date.now().toString()).slice(0, 16);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ user, token: sessionToken, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 }));
   
   return { success: true, user };
+}
+
+/**
+ * Verify current session token with backend
+ */
+export async function verifySession(): Promise<{ success: boolean; user?: User; error?: string }> {
+  const session = getSession();
+  if (!session.token) {
+    return { success: false, error: 'No token found' };
+  }
+  
+  try {
+    const response = await fetch(AUTH_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'verify',
+        token: session.token
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      return { success: true, user: data.user as User };
+    } else {
+      // Token invalid, clear session
+      localStorage.removeItem(SESSION_KEY);
+      return { success: false, error: data.error };
+    }
+  } catch (err) {
+    console.warn('Backend auth unavailable, using local session');
+    return { success: session.isAuthenticated, user: session.user || undefined };
+  }
+}
+
+/**
+ * Logout user
+ */
+export async function logoutUser(): Promise<void> {
+  // Call backend logout API
+  try {
+    await fetch(AUTH_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'logout'
+      })
+    });
+  } catch (err) {
+    console.warn('Backend logout failed, clearing local session');
+  }
+  
+  // Clear local session
+  localStorage.removeItem(SESSION_KEY);
 }
 
 /**
@@ -200,14 +392,25 @@ export async function loginUser(email: string, password: string): Promise<{ succ
 export function getSession(): AuthState {
   try {
     const data = localStorage.getItem(SESSION_KEY);
+    console.log('[Auth] getSession: raw localStorage data =', data);
     if (!data) return { user: null, token: null, isAuthenticated: false };
     
     const session = JSON.parse(data);
+    console.log('[Auth] getSession: parsed session =', session);
     
     // Check if session expired
     if (Date.now() > session.expiresAt) {
+      console.log('[Auth] getSession: session expired, clearing');
       localStorage.removeItem(SESSION_KEY);
       return { user: null, token: null, isAuthenticated: false };
+    }
+    
+    // Auto-renew session if within 7 days of expiry
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    if (session.expiresAt - Date.now() < sevenDays) {
+      session.expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      console.log('[Auth] Session auto-renewed');
     }
     
     return {
@@ -215,16 +418,10 @@ export function getSession(): AuthState {
       token: session.token,
       isAuthenticated: true,
     };
-  } catch {
+  } catch (e) {
+    console.error('[Auth] getSession: error parsing session', e);
     return { user: null, token: null, isAuthenticated: false };
   }
-}
-
-/**
- * Logout current user
- */
-export function logoutUser(): void {
-  localStorage.removeItem(SESSION_KEY);
 }
 
 /**
@@ -247,7 +444,7 @@ export function isAuthenticated(): boolean {
  * Call this on app initialization
  */
 export async function ensureDemoUser(): Promise<User | null> {
-  // Demo user disabled by default — enable via VITE_DEMO_ENABLED=true env var
+  // Demo user disabled by default �?enable via VITE_DEMO_ENABLED=true env var
   const demoEnabled = import.meta.env.VITE_DEMO_ENABLED === "true";
   if (!demoEnabled) {
     return null;
@@ -325,28 +522,19 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
   };
   saveResetTokens(tokens);
   
-  // Send reset email via API
+  // Send reset email via mailto: link (MVP — no server-side email)
   const resetLink = `${window.location.origin}/#reset-password/${token}`;
   const subject = "Reset Your Compliance Cat Password";
-  const html = `
-    <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
-      <h2 style="color: #3b82f6;">Compliance Cat</h2>
-      <p>Hello,</p>
-      <p>We received a request to reset your password. Click the button below to set a new password:</p>
-      <p style="text-align: center; margin: 24px 0;">
-        <a href="${resetLink}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
-      </p>
-      <p style="color: #64748b; font-size: 14px;">This link expires in 30 minutes.</p>
-      <p style="color: #64748b; font-size: 14px;">If you didn't request this, you can ignore this email.</p>
-      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-      <p style="color: #94a3b8; font-size: 12px;">Powered by Agnes AI • Compliance Cat</p>
-    </div>
-  `;
-  
-  // Email sending disabled (mailto-only approach in MVP)
-  // Reset token is still generated and stored locally
-  console.log("Password reset requested for:", userRecord.email, "(email not sent - mailto only in MVP)");
-  
+  const mailtoBody = `Hello,\n\nWe received a request to reset your password for Compliance Cat.\n\nClick the link below to set a new password:\n${resetLink}\n\nThis link expires in 30 minutes.\n\nIf you didn't request this, you can ignore this email.`;
+  const mailtoUri = `mailto:${encodeURIComponent(userRecord.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(mailtoBody)}`;
+
+  // Open user's default mail client
+  const mailWindow = window.open(mailtoUri, '_blank');
+  if (!mailWindow) {
+    // Popup blocked — fall back to showing the link
+    console.warn("Password reset: popup blocked. User should manually open:", resetLink);
+  }
+
   return { success: true };
 }
 
@@ -393,7 +581,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
     return { success: false, error: "User not found" };
   }
   
-  // Update password with enhanced hash
+  // Update password with enhanced hash (await since enhancedHash is now async)
   users[userIndex].passwordHash = await enhancedHash(newPassword);
   saveUsers(users);
   

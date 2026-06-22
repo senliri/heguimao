@@ -16,8 +16,14 @@ AGNES_API_KEY = "sk-LgcxeEG9Qz6kCipH6mzmm9kkWj9J4gFla8FsV2qjzXhB8y8F"
 AUTH_PASSWORD = ""
 AGNES_API_URL = "https://apihub.agnes-ai.com/v1/chat/completions"
 AGNES_MODEL = "agnes-2.0-flash"
+JWT_SECRET = "heguimao-jwt-secret-2024-change-in-production"
 
 # Optional: KV namespace for caching (uncomment after creating one)
 # [[kv_namespaces]]
 # binding = "CHAT_CACHE"
 # id = "YOUR_KV_NAMESPACE_ID"
+
+# User database KV namespace
+[[kv_namespaces]]
+binding = "USER_DB"
+id = "0eec625e553540d9bd1507f2a56fbdd9"

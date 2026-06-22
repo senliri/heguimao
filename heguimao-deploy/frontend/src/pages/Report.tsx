@@ -201,9 +201,11 @@ export function Report() {
     runDiagnosis();
   }, [isAiMode, aiProduct, marketId, location.state]);
 
-  // Use merged recommendations in AI mode, structured in normal mode
+  // In AI mode, fall back to structured recommendations if AI fails
   const displayRecommendations = isAiMode && aiResult
     ? aiResult.recommendations as RecommendationItem[]
+    : isAiMode && !aiResult && !aiLoading
+    ? recommendations
     : recommendations;
   const highCount = displayRecommendations.filter((i) => i.severity === "high" && i.required).length;
   const mediumCount = displayRecommendations.filter((i) => i.severity === "medium").length;

@@ -1,7 +1,8 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { getSession, logoutUser, getCurrentUser, ensureDemoUser, type User } from "../lib/auth";
+import { logMonitor } from "../lib/monitor";
 
 const AUTH_CONTEXT = "compliance-cat-auth-v2";
 
@@ -27,16 +28,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const prevSessionRef = useRef<string | null>(null);
+
+  // Callback to reload auth state from localStorage
+  const reloadAuth = () => {
+    const session = getSession();
+    if (session.isAuthenticated && session.user) {
+      setUser(session.user);
+      setIsAuthenticated(true);
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  // Expose reloadAuth on window for auth page to call after login/register
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as unknown as Record<string, unknown>).__reloadAuth__ = reloadAuth;
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as unknown as Record<string, unknown>).__reloadAuth__;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     
     const initAuth = async () => {
+      console.log('[Auth] initAuth: starting');
       // Ensure demo user exists on first load
       await ensureDemoUser();
       
       // Check session on mount
       const session = getSession();
+      console.log('[Auth] initAuth: session=', session);
+      console.log('[Auth] initAuth: localStorage session=', localStorage.getItem('compliance_cat_session'));
       if (session.isAuthenticated && session.user && !cancelled) {
         setUser(session.user);
         setIsAuthenticated(true);
@@ -46,10 +75,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     
+    logMonitor({ type: "info", category: "system", message: "App initialized", details: { directApi: import.meta.env.VITE_DIRECT_API === "1" } });
     initAuth();
+    
+    // Use polling to detect localStorage changes
+    // storage event only fires in OTHER tabs, not same tab
+    const interval = setInterval(() => {
+      if (cancelled) return;
+      const currentSession = localStorage.getItem('compliance_cat_session');
+      if (currentSession !== prevSessionRef.current) {
+        prevSessionRef.current = currentSession;
+        const session = getSession();
+        if (session.isAuthenticated && session.user) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+          console.log('[Auth] Session changed, updated state');
+        } else if (!session.isAuthenticated) {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      }
+    }, 1000);
     
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
@@ -57,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logoutUser();
     setUser(null);
     setIsAuthenticated(false);
+    logMonitor({ type: "info", category: "auth", message: "User logged out" });
   };
 
   return (

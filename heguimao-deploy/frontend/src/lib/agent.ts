@@ -3,13 +3,15 @@
 import { PROFILE_EXTRACTION_PROMPT, DIAGNOSIS_PROMPT, APPEAL_PROMPT, SHORT_REPLY_PROMPT } from "./prompts";
 import { cache } from "./store";
 import { categoryComplianceData } from "../data/site";
+import { logMonitor } from "./monitor";
+import { canMakeApiCall, incrementApiCall } from "./subscription";
 
 // API proxy - frontend calls Cloudflare Worker (key hidden server-side)
 // API key injected via Cloudflare Pages environment variable
 // Dev mode: VITE_DIRECT_API=1 bypasses Worker and calls Agnes API directly
 const AGNES_PROXY_URL = import.meta.env.VITE_WORKER_URL || "https://heguimao-api.senliri028.workers.dev/api/chat";
 const AGNES_MODEL = import.meta.env.VITE_AGNES_MODEL || "agnes-2.0-flash";
-const AGNES_API_KEY = import.meta.env.VITE_AGNES_API_KEY || "";
+const AGNES_API_KEY = import.meta.env.VITE_AGNES_API_KEY;
 const USE_DIRECT_API = import.meta.env.VITE_DIRECT_API === "1";
 // ============================================
 // Product Feature Keyword Dictionary
@@ -499,13 +501,20 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
 
   if (USE_DIRECT_API) {
     // Direct mode: call Agnes API via Vite proxy (/v1 -> apihub.agnes-ai.com)
+    if (!AGNES_API_KEY) {
+      throw new Error('VITE_AGNES_API_KEY environment variable is not set. Please configure the API key in your deployment environment.');
+    }
     console.log('[Agent] Using direct API mode (Worker bypass)');
+    logMonitor({ type: "info", category: "api", message: `API call: ${endpoint} (direct mode)` });
+    
+    // Check subscription limits
+    if (!canMakeApiCall()) {
+      throw new Error('API limit reached. Please upgrade your plan.');
+    }
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AGNES_API_KEY}`,
     };
-    if (AGNES_API_KEY) {
-      headers['Authorization'] = `Bearer ${AGNES_API_KEY}`;
-    }
     const response = await fetch('/v1/chat/completions', {
       method: 'POST',
       headers,
@@ -523,20 +532,27 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
     if (!response.ok) {
       const errorText = await response.text();
       console.warn('[Agent] Direct API call failed:', response.status, errorText);
+      logMonitor({ type: "error", category: "api", message: `API call failed: ${endpoint}`, details: { status: response.status, error: errorText } });
       throw new Error('AI service temporarily unavailable');
     }
 
     const data = await response.json();
     reply = data.choices?.[0]?.message?.content || '';
+    logMonitor({ type: "success", category: "api", message: `API call succeeded: ${endpoint}` });
+    incrementApiCall();
   } else {
-    // Worker proxy mode
+    // Worker proxy mode — key is hidden on server side, no client key needed
     console.log('[Agent] Calling API via Worker proxy:', AGNES_PROXY_URL);
+    logMonitor({ type: "info", category: "api", message: `API call: ${endpoint} (worker proxy)` });
+    const requestBody = { action: endpoint, prompt: params.prompt as string || '', message: (params.message as string) || '', temperature: 0.3 };
+    console.log('[Agent] Request body length:', JSON.stringify(requestBody).length);
+    console.log('[Agent] Request body action:', requestBody.action);
     const response = await fetch(AGNES_PROXY_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: endpoint, prompt: params.prompt as string || '', message: (params.message as string) || '', temperature: 0.3 }),
+      body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(30000),
     });
 
@@ -671,7 +687,7 @@ function parseAIResponse<T>(text: string): T {
     return result;
   }
   
-  // Final safety check: ensure recommendations exists
+  // Final safety check: ensure recommendations exists and are properly structured
   function ensureRecommendations(obj: any): any {
     if (!obj || typeof obj !== 'object') return obj;
     if (Array.isArray(obj)) return obj.map(ensureRecommendations);
@@ -695,6 +711,43 @@ function parseAIResponse<T>(text: string): T {
         result.recommendations = [];
       }
     }
+    
+    // FIX: Ensure recommendations are structured objects, not strings
+    if (Array.isArray(result.recommendations)) {
+      result.recommendations = result.recommendations.map((item: any, idx: number) => {
+        // If it's a string, convert to structured object
+        if (typeof item === 'string') {
+          return {
+            name: item.length > 60 ? item.substring(0, 60) + '...' : item,
+            required: true,
+            desc: item,
+            severity: 'medium',
+            reason: item,
+            estimatedCost: 'TBD',
+            estimatedTime: 'TBD',
+            action: item,
+            needsThirdParty: false,
+            confidence: 'medium',
+            priorityLabel: '🟡 Recommended',
+          };
+        }
+        // If it's already an object, ensure all required fields exist
+        return {
+          name: item.name || item.category || item.title || `Requirement ${idx + 1}`,
+          required: item.required !== undefined ? item.required : (item.severity === 'high'),
+          desc: item.desc || item.diagnosis || item.requirement || item.details || item.name || '',
+          severity: item.severity || 'medium',
+          reason: item.reason || item.details || item.diagnosis || '',
+          estimatedCost: item.estimatedCost || 'TBD',
+          estimatedTime: item.estimatedTime || 'TBD',
+          action: item.action || item.requirements || '',
+          needsThirdParty: item.needsThirdParty !== undefined ? item.needsThirdParty : false,
+          confidence: item.confidence || 'medium',
+          priorityLabel: item.priorityLabel || (item.severity === 'high' ? '🔴 Mandatory' : '🟡 Recommended'),
+        };
+      });
+    }
+    
     return result;
   }
   

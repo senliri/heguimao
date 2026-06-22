@@ -87,17 +87,10 @@ export function AuthPage() {
       if (result.success && result.user) {
         setSuccess(mode === "register" ? "Registration successful! Logging you in..." : "Login successful!");
         
-        // Redirect to home (SPA navigation, no page refresh)
-        // Show success message for 1.5s so user sees confirmation
-        setTimeout(async () => {
-          // Ensure session is committed to storage before navigating
-          const session = getSession();
-          if (!session.isAuthenticated) {
-            // Session not ready yet, force a small delay
-            await new Promise(r => setTimeout(r, 500));
-          }
+        // Show success message briefly, then navigate to home
+        setTimeout(() => {
           navigate("/", { replace: true });
-        }, 1500);
+        }, 800);
       } else {
         setError(result.error || "Authentication failed");
       }
@@ -174,7 +167,8 @@ export function AuthPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name field (register only) */}
-            <div className="relative" hidden={mode !== "register"}>
+            {mode === "register" && (
+            <div className="relative">
               <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <input
                 type="text"
@@ -182,9 +176,10 @@ export function AuthPage() {
                 onChange={(e) => { setName(e.target.value); setError(""); }}
                 placeholder="Full name"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
-                required={mode === "register"}
+                required
               />
             </div>
+            )}
 
             {/* Email */}
             <div className="relative">
@@ -200,7 +195,8 @@ export function AuthPage() {
             </div>
 
             {/* Password */}
-            <div className="relative" hidden={mode === "reset-request"}>
+            {mode !== "reset-request" && (
+            <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <input
                 type={showPassword ? "text" : "password"}
@@ -208,8 +204,8 @@ export function AuthPage() {
                 onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 placeholder="Password"
                 className="w-full pl-10 pr-12 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
-                required={mode !== "reset-request"}
-                minLength={mode !== "reset-request" ? 6 : undefined}
+                required
+                minLength={6}
               />
               <button
                 type="button"
@@ -219,6 +215,7 @@ export function AuthPage() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            )}
 
           {/* Error/Success Messages */}
           <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 px-4 py-3 rounded-xl" hidden={!error}>

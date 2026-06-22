@@ -3,6 +3,8 @@ const DIAGNOSIS_CACHE_KEY = "compliance_cat_diagnosis_cache";
 const CACHE_STATS_KEY = "compliance_cat_cache_stats";
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours — compliance rules change frequently
 
+import { logMonitor } from "./monitor";
+
 // Product category normalization map for fuzzy caching
 // Expanded with more keyword mappings for better cross-category cache hits
 const CATEGORY_NORMALIZATION: Record<string, string> = {
@@ -140,7 +142,10 @@ export function normalizeCacheKey(productType: string, market: string): string {
   for (const keyword of sortedKeywords) {
     // Use word boundary matching to avoid false positives
     // e.g., "phone" should not match "smartphone"
-    const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    // Escape regex special chars in keyword, then use \b for word boundaries.
+    // Additionally split on common delimiters to ensure we match whole words only.
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(?:^|(?<=[\\s,\\-./()\\[\\]{}|;:'"\\\\]))${escaped}(?=$|[\\s,\\-./()\\[\\]{}|;:'"\\\\])`, 'i');
     if (regex.test(lower)) {
       return `${CATEGORY_NORMALIZATION[keyword]}-${marketKey}`;
     }
@@ -175,6 +180,7 @@ export const cache = {
       const data = localStorage.getItem(DIAGNOSIS_CACHE_KEY);
       if (!data) {
         cache.recordMiss();
+        logMonitor({ type: "info", category: "cache", message: `Cache miss: ${productType} / ${market}` });
         return undefined;
       }
       const entries: DiagnosisCacheEntry[] = JSON.parse(data);
@@ -199,6 +205,7 @@ export const cache = {
         return undefined;
       }
       cache.recordHit();
+      logMonitor({ type: "success", category: "cache", message: `Cache hit: ${productType} / ${market}`, details: { saved: true } });
       return entry.result;
     } catch {
       cache.recordMiss();
@@ -211,6 +218,7 @@ export const cache = {
    */
   setDiagnosis(productType: string, market: string, result: unknown): void {
     try {
+      logMonitor({ type: "info", category: "cache", message: `Cache set: ${productType} / ${market}` });
       const data = localStorage.getItem(DIAGNOSIS_CACHE_KEY);
       const entries: DiagnosisCacheEntry[] = data ? JSON.parse(data) : [];
       const targetKey = normalizeCacheKey(productType, market);
