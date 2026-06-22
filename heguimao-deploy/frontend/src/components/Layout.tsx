@@ -1,22 +1,59 @@
 import { Link, useLocation } from "react-router-dom";
 import { siteConfig } from "../data/site";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FeedbackModal, FeedbackButton } from "./Feedback";
 import { useDynamicMeta } from "../hooks/useDynamicMeta";
 import { useAuth } from "./AuthGate";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Menu, X, Globe } from "lucide-react";
+import { t, setLocale, getLocale } from "../lib/i18n";
+import { getUsers } from "../lib/auth";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   useDynamicMeta();
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const [showFeedback, setShowFeedback] = useState(false);
-  const navItems = [
-    { label: "Compliance Report", href: "/report" },
-    { label: "Appeal Assistant", href: "/appeal" },
-    { label: "Portfolio", href: "/portfolio" },
-    { label: "Dashboard", href: "/dashboard" },
-  ];
+  const [lang, setLang] = useState<string>(() => {
+    try { return localStorage.getItem("lang") || "en"; } catch { return "en"; }
+  });
+
+  // Check if current user is admin
+  const isAdmin = (() => {
+    if (!user) return false;
+    try {
+      const rawUsers = JSON.parse(localStorage.getItem("compliance_cat_users") || "[]");
+      const currentUser = rawUsers.find((u: any) => u.email === user.email);
+      return currentUser?.role === "admin";
+    } catch {
+      return false;
+    }
+  })();
+  // Sync lang state with i18n locale
+  useEffect(() => {
+    try {
+      const savedLocale = localStorage.getItem("compliance_cat_locale");
+      if (savedLocale && savedLocale !== lang) {
+        setLang(savedLocale);
+      }
+    } catch {}
+  }, []);
+
+  const navItems = useMemo(() => {
+    const items = [
+      { label: t("nav.report"), href: "/report" },
+      { label: t("nav.appeal"), href: "/appeal" },
+      { label: t("nav.monitor"), href: "/monitor" },
+      { label: t("nav.pricing"), href: "/pricing" },
+      ...(isAdmin ? [{ label: "管理", href: "/admin" }] : []),
+    ];
+    // Force re-read locale on every render by accessing localStorage
+    try {
+      const savedLocale = localStorage.getItem("compliance_cat_locale") || "en";
+      // t() reads currentLocale which gets updated by setLocale()
+      // We need to re-sync it here
+    } catch {}
+    return items;
+  }, [lang, isAdmin]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -29,7 +66,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
           <nav className="flex items-center gap-1 overflow-x-auto text-sm sm:gap-2">
             {navItems.map((item) => {
-              // Match pathname, ignoring query params (e.g. /report?ai=true)
               const isActive = location.pathname === item.href || (item.href !== "/" && location.pathname.startsWith(item.href));
               return (
                 <Link
@@ -54,10 +90,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             ) : (
               <div className="flex items-center gap-2 ml-2">
-                <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/5 text-xs">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/5 text-xs hover:bg-white/10 transition"
+                >
                   <User className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-slate-300">{user.name.split(" ")[0]}</span>
-                </div>
+                  <span className="text-slate-300 hidden sm:inline">{user.name.split(" ")[0]}</span>
+                </Link>
                 <button
                   onClick={logout}
                   className="flex items-center gap-1 px-2 py-1.5 text-slate-400 hover:text-white transition rounded-lg hover:bg-white/5 text-xs"
@@ -65,6 +104,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Sign out</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const newLang = lang === "zh" ? "en" : "zh";
+                    setLang(newLang);
+                    setLocale(newLang as "en" | "zh");
+                    document.documentElement.lang = newLang;
+                    localStorage.setItem("lang", newLang);
+                  }}
+                  className="flex items-center gap-1 px-2 py-1.5 text-slate-400 hover:text-white transition rounded-lg hover:bg-white/5 text-xs"
+                  title="Switch language"
+                >
+                  <Globe className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{lang === "zh" ? "EN" : "中文"}</span>
                 </button>
               </div>
             )}
