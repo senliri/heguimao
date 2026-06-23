@@ -83,56 +83,21 @@ export async function reviewPOA(
 }
 
 async function callAgnesAI<T>(prompt: string, message: string): Promise<T> {
-  const isDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  const isDev = import.meta.env.DEV;
   const apiKey = import.meta.env.VITE_AGNES_API_KEY || "";
+  const workerUrl = import.meta.env.VITE_WORKER_URL || "https://heguimao-api.senliri028.workers.dev";
   
   const url = isDev 
-    ? "https://apihub.agnes-ai.com/v1/chat/completions"
-    : "/api/chat";
+    ? `${workerUrl}/api/chat`
+    : `${workerUrl}/api/chat`;
   
-  if (isDev) {
-    // Direct API call in dev mode
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "agnes-2.0-flash",
-        messages: [
-          { role: "system", content: prompt },
-          { role: "user", content: message },
-        ],
-        temperature: 0.3,
-      }),
-    });
-    
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "";
-    const cleaned = reply.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("AI returned unexpected format");
-    return JSON.parse(jsonMatch[0]);
-  } else {
-    // Production: use Vercel Serverless Function
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "appeal-analyze",
-        prompt,
-        message,
-      }),
-    });
-    
-    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-    const data = await response.json();
-    const reply = data.reply || data.content || "";
-    const cleaned = reply.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("AI returned unexpected format");
-    return JSON.parse(jsonMatch[0]);
-  }
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "appeal-analyze",
+      prompt,
+      message,
+    }),
+  });
 }

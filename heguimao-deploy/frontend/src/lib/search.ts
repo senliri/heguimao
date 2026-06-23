@@ -16,6 +16,8 @@ export interface ComplianceSearchResult {
 // 搜索缓存（24h TTL）
 const searchCache = new Map<string, { data: ComplianceSearchResult; expires: number }>();
 
+const SEARCH_API_URL = import.meta.env.VITE_SEARCH_API_URL || "https://heguimao-api.senliri028.workers.dev/api/chat";
+
 export async function searchCompliance(query: string, cacheTtl: number = 86400000): Promise<SearchResult[]> {
   const cacheKey = query;
   const cached = searchCache.get(cacheKey);
@@ -25,10 +27,14 @@ export async function searchCompliance(query: string, cacheTtl: number = 8640000
   }
 
   try {
-    const response = await fetch("/api/compliance-search", {
+    const response = await fetch(SEARCH_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        action: "compliance_search",
+        prompt: "Identify the product category and its compliance requirements based on the query.",
+        message: query,
+      }),
     });
 
     if (!response.ok) {

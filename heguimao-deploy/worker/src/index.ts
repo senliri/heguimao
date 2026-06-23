@@ -166,7 +166,8 @@ async function handleAuthAPI(request: Request, env: Env): Promise<Response> {
         return jsonResponse({ error: 'Email already registered' }, 409);
       }
       
-      // Hash password
+      // Hash password with SHA-256 (matches frontend auth.ts enhancedHash for fallback)
+      // Note: Frontend uses PBKDF2, Worker uses SHA-256. Login flow verifies via Worker PBKDF2-compatible path.
       const passwordHash = await sha256(body.password);
       
       // Create user object
@@ -206,9 +207,45 @@ async function handleAuthAPI(request: Request, env: Env): Promise<Response> {
       
       const user: User = JSON.parse(userStr);
       
-      // Verify password
+      // Verify password — support both SHA-256 (legacy/Worker-native) and PBKDF2 (frontend-stored)
       const passwordHash = await sha256(body.password);
-      if (user.passwordHash !== passwordHash) {
+      let passwordValid = false;
+      
+      if (user.passwordHash.startsWith('pbkdf2_')) {
+        // Frontend-stored PBKDF2 hash — extract salt and re-verify
+        const parts = user.passwordHash.split('_');
+        if (parts.length === 3) {
+          const b64Salt = parts[1];
+          const b64StoredHash = parts[2];
+          const padSalt = b64Salt + '='.repeat((4 - b64Salt.length % 4) % 4);
+          const padHash = b64StoredHash + '='.repeat((4 - b64StoredHash.length % 4) % 4);
+          const salt = Uint8Array.from(atob(padSalt), c => c.charCodeAt(0));
+          const storedHashBytes = Uint8Array.from(atob(padHash), c => c.charCodeAt(0));
+          
+          const keyMaterial = await crypto.subtle.importKey(
+            'raw', new TextEncoder().encode(body.password),
+            { name: 'PBKDF2' }, false, ['deriveBits']
+          );
+          const derivedBits = await crypto.subtle.deriveBits(
+            { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
+            keyMaterial, 256
+          );
+          const derivedHashBytes = new Uint8Array(derivedBits);
+          
+          if (derivedHashBytes.length === storedHashBytes.length) {
+            let match = 0;
+            for (let i = 0; i < derivedHashBytes.length; i++) {
+              match |= derivedHashBytes[i] ^ storedHashBytes[i];
+            }
+            passwordValid = match === 0;
+          }
+        }
+      } else {
+        // SHA-256 hash (Worker-native or legacy)
+        passwordValid = passwordHash === user.passwordHash;
+      }
+      
+      if (!passwordValid) {
         return jsonResponse({ error: 'Invalid email or password' }, 401);
       }
       
@@ -336,13 +373,23 @@ function buildMessages(body: ChatRequestBody): {
   let userMessage: string;
   let temperature = body.temperature ?? 0.3;
 
-  if (action === 'diagnose' || action === 'ask') {
-    systemPrompt = prompt || 'You are a compliance expert for Amazon sellers.';
+  if (action === 'diagnose') {
+    systemPrompt = 'You are an Amazon compliance expert. You output ONLY valid JSON describing required certifications.';
+    userMessage = prompt + '\n\n---PRODUCT DATA---\n' + (message || '');
+    temperature = 0.3;
+  } else if (action === 'ask') {
+    // Follow-up questioning — keep it conversational
+    systemPrompt = prompt || 'You are an Amazon compliance expert. Ask targeted follow-up questions to gather product information needed for compliance diagnosis.';
     userMessage = message || '';
+    temperature = 0.5;
   } else if (action === 'appeal' || action === 'appeal-analyze') {
-    systemPrompt = prompt || 'You are an Amazon appeal expert.';
+    systemPrompt = prompt || 'You are an Amazon appeal expert specializing in account reinstatement and Plan of Action writing.';
     userMessage = message || '';
     temperature = 0.7; // Higher creativity for appeals
+  } else if (action === 'compliance_search') {
+    systemPrompt = prompt || 'You are an Amazon product compliance researcher. Identify the product and its compliance requirements.';
+    userMessage = message || '';
+    temperature = 0.3;
   } else if (messages && Array.isArray(messages)) {
     // Multi-turn conversation — extract system prompt
     const systemMsg = messages.find(m => m.role === 'system');

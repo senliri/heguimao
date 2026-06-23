@@ -515,14 +515,22 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${AGNES_API_KEY}`,
     };
+    // For diagnose action, put critical instructions in user message (smaller models ignore system prompts)
+    const sysContent = params.action === 'diagnose'
+      ? 'You are an Amazon compliance expert. Output ONLY valid JSON. English only. No markdown. No backticks. No wrapper object. Start with { and end with }.'
+      : (params.prompt as string || '');
+    const userContent = params.action === 'diagnose'
+      ? (params.prompt as string || '') + '\n\n---\n\n' + (params.message as string || '')
+      : (params.message as string || '');
+
     const response = await fetch('/v1/chat/completions', {
       method: 'POST',
       headers,
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: 'system', content: params.prompt as string || '' },
-          { role: 'user', content: (params.message as string) || '' },
+          { role: 'system', content: sysContent },
+          { role: 'user', content: userContent },
         ],
         temperature: 0.3,
       }),
@@ -916,6 +924,54 @@ export async function generateDiagnosis(
     return map[m] || "Australia";
   })();
 
+  // Build structured feature description for AI
+  const featureDescriptions: string[] = [];
+  if (mergedProfile.has_battery) {
+    featureDescriptions.push("Contains lithium battery");
+    if (mergedProfile.battery_capacity) {
+      featureDescriptions.push(`Battery capacity: ${mergedProfile.battery_capacity}mAh`);
+    }
+  }
+  if (mergedProfile.has_wireless) {
+    featureDescriptions.push("Has wireless/RF capability (Bluetooth/WiFi/RF)");
+  }
+  if (mergedProfile.is_children) {
+    featureDescriptions.push("Designed for children under 12");
+  }
+  if (mergedProfile.food_contact) {
+    featureDescriptions.push("Direct food contact surface");
+  }
+  if (mergedProfile.wearable) {
+    featureDescriptions.push("Worn on body (wearable)");
+  }
+  if (mergedProfile.medical) {
+    featureDescriptions.push("Medical device or health monitoring");
+  }
+  if (mergedProfile.electrical) {
+    featureDescriptions.push("Electrically powered device");
+  }
+  if (mergedProfile.contains_chemicals) {
+    featureDescriptions.push("Contains chemicals (cosmetics, essential oils, etc.)");
+  }
+  if (mergedProfile.contains_magnets) {
+    featureDescriptions.push("Contains magnets (speakers, magnetic closures, etc.)");
+  }
+  if (mergedProfile.precision) {
+    featureDescriptions.push("Precision instrument (camera, measuring device, etc.)");
+  }
+  if (mergedProfile.has_flammable) {
+    featureDescriptions.push("Flammable or aerosol product");
+  }
+
+  // Build negative features (things that DON'T apply)
+  const negFeatures: string[] = [];
+  if (!mergedProfile.has_battery) negFeatures.push("No battery");
+  if (!mergedProfile.has_wireless) negFeatures.push("No wireless/RF");
+  if (!mergedProfile.is_children) negFeatures.push("Not for children");
+  if (!mergedProfile.food_contact) negFeatures.push("No food contact");
+  if (!mergedProfile.medical) negFeatures.push("Not a medical device");
+  if (!mergedProfile.electrical) negFeatures.push("Not electrically powered");
+
   return callAI<DiagnosisResult>(
     "diagnose",
     {
@@ -924,21 +980,10 @@ export async function generateDiagnosis(
         .replace("{productFeatures}", featureList.join(", "))
         .replace("{market}", marketName)
         .replace("{category}", category || mergedProfile.category),
-      message: `Generate a detailed compliance diagnosis for the following product:
-
-Product type: ${mergedProfile.product_type}
-Category: ${mergedProfile.category}
-Detected features: ${featureList.join(", ")}
+      message: `Product: ${mergedProfile.product_type} (${mergedProfile.category})
 Target market: ${marketName}
-
-Key risk factors to consider:
-- If battery: UN38.3, MSDS, IATA transport rules
-- If children's product: CPSIA/CPC (US), EN71/CE-UKCA (EU), PSE/JIS (Japan)
-- If food contact: FDA 21 CFR (US), EU 10/2011 (EU), food hygiene standards
-- If medical: FDA Class (US), EU MDR (EU), PMDA (Japan)
-- If magnetic: 15 CFR 1309 magnet strength test
-- If flammable: DOT transport certification, IATA packing instructions
-- If wireless/radio: FCC ID (US), RED/CE (EU), TELEC (Japan), SRRC (China export)`
+Features: ${featureDescriptions.length > 0 ? featureDescriptions.join(', ') : 'none'}
+Exclude: ${negFeatures.slice(0, 5).join(', ')}`
     }
   );
 }

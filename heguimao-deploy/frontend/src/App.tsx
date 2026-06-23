@@ -10,6 +10,7 @@ import { Report } from "./pages/Report";
 import { AuthPage } from "./pages/AuthPage";
 import { Monitor } from "./pages/Monitor";
 import { Pricing } from "./pages/Pricing";
+import { ParameterQuiz } from "./pages/ParameterQuiz";
 
 // Lazy-loaded routes — reduces initial bundle size
 const Portfolio = React.lazy(() => import("./pages/Portfolio"));
@@ -28,13 +29,18 @@ function PageLoader() {
 // Shows detailed error info in production for debugging
 function ErrorFallback({ error, resetErrorBoundary }: { error: Error | null; resetErrorBoundary?: () => void }) {
   const [showDetails, setShowDetails] = useState(false);
+  const isAiFormatError = error?.message?.includes("AI returned unexpected format");
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="text-center max-w-lg w-full">
         <AlertTriangle className="h-12 w-12 text-amber-400 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-white mb-2">出了点问题</h2>
-        <p className="text-slate-400 mb-4">页面加载时发生了错误，请刷新重试。</p>
+        <p className="text-slate-400 mb-4">
+          {isAiFormatError
+            ? "AI 返回了意外格式，可能是响应解析失败。请重试。"
+            : "页面加载时发生了错误，请刷新重试。"}
+        </p>
 
         {error && (
           <>
@@ -151,6 +157,11 @@ export function App() {
               <Route path="/pricing" element={
                 <ProtectedLayout>
                   <Layout><Pricing /></Layout>
+                </ProtectedLayout>
+              } />
+              <Route path="/quiz" element={
+                <ProtectedLayout>
+                  <Layout><ParameterQuiz /></Layout>
                 </ProtectedLayout>
               } />
               <Route path="/portfolio" element={

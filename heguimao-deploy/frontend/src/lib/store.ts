@@ -126,34 +126,46 @@ const CATEGORY_NORMALIZATION: Record<string, string> = {
   "shovel": "garden",
 };
 
+// Memoization cache for normalizeCacheKey to avoid repeated regex computation
+const cacheKeyMemo = new Map<string, string>();
+
 /**
  * Normalize product type + market into a deterministic cache key.
- * Priority: exact match → keyword match → first significant word.
+ * Priority: exact match -> keyword match -> first significant word.
  */
 export function normalizeCacheKey(productType: string, market: string): string {
   const lower = productType.toLowerCase().trim();
   const marketKey = market.toLowerCase().replace(/[^a-z0-9]/g, "-");
+  const memoKey = `${lower}|${marketKey}`;
+  
+  const cached = cacheKeyMemo.get(memoKey);
+  if (cached) return cached;
+  
   // 1. Exact match in normalization map
   const direct = CATEGORY_NORMALIZATION[lower];
-  if (direct) return `${direct}-${marketKey}`;
+  if (direct) {
+    const result = `${direct}-${marketKey}`;
+    cacheKeyMemo.set(memoKey, result);
+    return result;
+  }
   // 2. Keyword inclusion match (more specific keywords first)
   const sortedKeywords = Object.keys(CATEGORY_NORMALIZATION)
     .sort((a, b) => b.length - a.length); // longer keywords first
   for (const keyword of sortedKeywords) {
-    // Use word boundary matching to avoid false positives
-    // e.g., "phone" should not match "smartphone"
-    // Escape regex special chars in keyword, then use \b for word boundaries.
-    // Additionally split on common delimiters to ensure we match whole words only.
     const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(?:^|(?<=[\\s,\\-./()\\[\\]{}|;:'"\\\\]))${escaped}(?=$|[\\s,\\-./()\\[\\]{}|;:'"\\\\])`, 'i');
     if (regex.test(lower)) {
-      return `${CATEGORY_NORMALIZATION[keyword]}-${marketKey}`;
+      const result = `${CATEGORY_NORMALIZATION[keyword]}-${marketKey}`;
+      cacheKeyMemo.set(memoKey, result);
+      return result;
     }
   }
   // 3. Fallback: first word with >2 chars
-  const words = lower.split(/[\s,.-]+/).filter(w => w.length > 2);
+  const words = lower.split(/[\\s,.-]+/).filter(w => w.length > 2);
   const primaryWord = words[0] || "generic";
-  return `${primaryWord}-${marketKey}`;
+  const result = `${primaryWord}-${marketKey}`;
+  cacheKeyMemo.set(memoKey, result);
+  return result;
 }
 
 export interface DiagnosisCacheEntry {

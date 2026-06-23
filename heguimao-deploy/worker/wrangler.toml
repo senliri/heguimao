@@ -12,10 +12,10 @@ observability.logs.enabled = true
 
 # Environment Variables
 [vars]
-AGNES_API_KEY = "sk-LgcxeEG9Qz6kCipH6mzmm9kkWj9J4gFla8FsV2qjzXhB8y8F"
+AGNES_API_KEY = "sk-dENHPF3klHwqJuL4oFPOeEgwjmw3jg85CEdOPTckF8GEB3RQ"
 AUTH_PASSWORD = ""
 AGNES_API_URL = "https://apihub.agnes-ai.com/v1/chat/completions"
-AGNES_MODEL = "agnes-2.0-flash"
+AGNES_MODEL = "agnes-1.5-flash"
 JWT_SECRET = "heguimao-jwt-secret-2024-change-in-production"
 
 # Optional: KV namespace for caching (uncomment after creating one)

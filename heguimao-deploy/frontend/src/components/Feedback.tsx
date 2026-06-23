@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { X, Send, MessageSquare, AlertCircle, Lightbulb, TrendingUp, ThumbsDown, ThumbsUp } from "lucide-react";
 
+const FEEDBACK_API_URL = import.meta.env.VITE_FEEDBACK_API_URL || "https://heguimao-api.senliri028.workers.dev/api/chat";
+
 type FeedbackType = "experience" | "content" | "feature" | "high_frequency";
 type FeedbackCategory = "bug" | "slow" | "inaccurate" | "missing_content" | "too_professional" | "ui_layout" | "new_feature" | "other";
 
@@ -57,7 +59,7 @@ export function FeedbackModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
     if (!detail.trim()) return;
     setIsSubmitting(true);
     try {
-      await fetch("/api/feedback", {
+      await fetch(FEEDBACK_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

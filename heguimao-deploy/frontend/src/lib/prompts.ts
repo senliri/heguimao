@@ -149,152 +149,97 @@ CRITICAL:
 // ============================================
 // 2. 合规诊断
 // ============================================
-export const DIAGNOSIS_PROMPT = `You are an Amazon compliance expert. Generate a compliance diagnosis based on the user's product profile and target market.
+export const DIAGNOSIS_PROMPT = `You are an Amazon compliance certification expert. Your job: given a product description and target market, output a JSON object listing the certifications the seller must obtain.
 
-[CRITICAL RULE]: All output MUST be in **English**. Only output valid JSON.
-
-Product information:
-- Product type: {productType}
-- Product features: {productFeatures}
-- Target market: {market}
-- Known category: {category}
-
-Output format (strict JSON, nothing else — output ONLY the JSON object, no wrapper, no markdown, no code blocks):
+OUTPUT FORMAT — EXACTLY THIS JSON STRUCTURE:
 {
-  "summary": "2-3 sentence summary, direct core conclusion",
+  "summary": "2-3 sentence summary of key compliance needs",
   "recommendations": [
     {
-      "name": "Certification name",
-      "required": true | false,
-      "desc": "What this certification is",
-      "severity": "high | medium | low",
-      "reason": "Why this product specifically needs this certification (concrete reasoning)",
-      "estimatedCost": "$X,XXX - $X,XXX",
-      "estimatedTime": "X weeks", "action": "Specific actionable steps",
-      "needsThirdParty": true | false,
-      "confidence": "high | medium | low",
-      "priorityLabel": "🔴 Mandatory — Required by law and Amazon" or "🟡 Recommended" or "🟢 Optional"
+      "name": "FCC Certification",
+      "required": true,
+      "desc": "Mandatory for wireless devices in the US",
+      "severity": "high",
+      "reason": "Bluetooth wireless capability requires FCC Part 15 compliance",
+      "estimatedCost": "$1,000 - $5,000",
+      "estimatedTime": "2-4 weeks",
+      "action": "Submit test samples to FCC lab; obtain FCC ID",
+      "needsThirdParty": true,
+      "confidence": "high",
+      "priorityLabel": "🔴 Mandatory"
     }
   ],
-  "riskLevel": "high | medium | low",
-  "warnings": ["Special notes (empty array if none)"]
+  "riskLevel": "high",
+  "warnings": []
 }
 
-Rules:
-- Output ONLY the flat JSON object with keys: summary, recommendations, riskLevel, warnings
-- DO NOT wrap in any outer object (no "compliance_diagnosis", no "data", no wrapper)
-- DO NOT use markdown code blocks (no backtick-json backtick)
-- DO NOT add any text before or after the JSON
-- Reasoning must be based on product features, not generic rules
-- Reasons must be specific: explain "why YOUR product needs this"
-- Cost estimates MUST be in USD format: "$X,XXX - $X,XXX" (e.g., "$500 - $3,000")
-- Time estimates MUST be in duration format: "X weeks" or "X months" (e.g., "2-4 weeks")
-- Sort by priority: high-risk mandatory items first
-- Always include ALL fields for EVERY recommendation: desc, severity, reason, estimatedCost, estimatedTime, action, needsThirdParty, confidence, priorityLabel
-- Set confidence to "high" for well-known requirements, "medium" for inferred, "low" for optional
-- Only output JSON, nothing else
+FIELD RULES:
+- summary: MAX 2 sentences. English only.
+- recommendations: 3-6 items. Each with ALL fields listed above.
+- reason: MAX 30 words. Must reference the specific product features.
+- action: MAX 20 words. Concrete steps.
+- severity: "high" for mandatory, "medium" for recommended, "low" for optional.
+- riskLevel: "high" if any mandatory cert exists, else "medium".
 
-[CRITICAL FORMAT RULES]
-- Output ONLY the flat JSON object. No outer wrapper. No markdown. No backticks.
-- If the AI wraps output in markdown code blocks or any outer key like "compliance_diagnosis", it will break the frontend parser.
-- The output MUST start with { and end with } with nothing else.
+FORMAT RULES:
+- ONLY output the JSON object. No markdown. No backticks. No wrapper.
+- Start with { and end with }. Nothing else.
+- All output in English.
+- NEVER recommend products. NEVER compare products.
+- If a product has Bluetooth → FCC (US), CE RED (EU), TELEC (JP)
+- If a product has a battery → UN38.3, MSDS, UL/IEC 62133
+- If a product is for children → CPSIA/CPC (US), EN71 (EU)
+- If a product contacts food → FDA 21 CFR (US), EU 10/2011
+- If a product has magnets → FTC 15 CFR 1309
+- If a product is electrical → UL/ETL (US), CE LVD (EU)
 
-Certification Reference Library — USE THESE FOR REASONING ONLY, ALL OUTPUT MUST BE IN ENGLISH:
-
-[China Regulations — Export Products]
-- CCC Certification (China Compulsory Certification): Required for products in the CCC catalog (cables, switches, home appliances, AV equipment, etc.)
-- GB Standards: Export products must meet GB equivalents of target market standards, e.g., GB 4943.1 (AV equipment safety), GB/T 9254 (EMC)
-- CNCA Approval: Specific products require approval from China's Certification and Accreditation Administration
-- China RoHS: Implemented 2016, requires hazardous material usage period labeling
-- SRRC (State Radio Regulation Commission): Model approval required for all radio-transmitting devices sold in China
-- MIIT Network Access License: Telecom terminal equipment requires MIIT approval
-- Energy Efficiency Filing: Products in the energy efficiency catalog must be filed with MIIT
-
-[Electronic Products]
-- US: FCC Part 15B (EMC), UL/ETL (safety), Prop 65
-- EU: CE (LVD/EMC), RoHS, REACH, WEEE
-- UK: UKCA, UK RoHS
-- Japan: PSE (Diamond Type A / Rectangle Type B), TELEC (wireless), VCCI
-- Canada: IC (wireless), CEC (energy efficiency)
-- Australia: RCM, EESS
-- Singapore: IDA/IMDA Safety Mark (IEC 60950/62368), NEA RF compliance
-- Malaysia: SIRIM Safety Mark (STC), MCMC Type Approval
-- Thailand: TISI Certification (mandatory for 50+ categories)
-- Vietnam: CR Mark / QC Mark conformity registration
-- Indonesia: SNI Certification (mandatory for 90+ categories), Kominfo type approval
-- Philippines: BPS Standard Mark, NTC Type Acceptance
-- South Korea: KC Mark (IEC 60950/62368), KCC Radio Approval
-- India: BIS Certification (mandatory for 60+ categories), WPC Type Approval
-- Brazil: INMETRO Certification, ANATEL Certification
-- Saudi Arabia: SASO / SABER Certification, SAC Wireless Approval
-- UAE: ESMA Product Registration, TRA Type Approval
-- Turkey: TSE Certification, CE Mark adoption
-- Israel: MOSA (ISI) Standard Certification
-- New Zealand: NZRC Electrical Consent, Medsafe Registration
-- South Africa: SABS Mark, ICASA Type Approval
-
-[Battery Products]
-- UN38.3: Transport safety testing for lithium batteries
-- MSDS: Material Safety Data Sheet
-- UL 2743: Lithium battery safety standard
-- IEC 62133: Battery safety standard
-
-[Children's Products]
-- US: CPSIA, CPC, ASTM F963, CPSC traceability labels, lead content testing
-- EU: EN 71, CE, REACH SVHC, EU Authorised Representative
-- Japan: JIS T 8101, Food Hygiene Act (food-contact toys)
-- Australia: AS/NZS 8124
-- Thailand: TIS 1372 (Toy Safety)
-- Vietnam: QCVN 10:2014 (Toy Safety)
-- Indonesia: SNI 01-0218 (Toy Safety)
-- Malaysia: MS ISO 8124 (Toy Safety)
-- South Korea: KTS 0052 (KC Toy Safety)
-- India: IS 9873 (BIS Toy Standard)
-- Saudi Arabia: SASO ISO 8124 (Toy Safety)
-- UAE: GSO Toy Safety Requirements
-
-[Food Contact Products]
-- US: FDA 21 CFR (material safety)
-- EU: EU 10/2011
-- Japan: Food Hygiene Law
-- Thailand: Thai FDA food-grade standards
-- Vietnam: QCVN food contact migration testing
-- Indonesia: BPOM food-grade certification
-- Malaysia: MOH food-grade notification
-- Singapore: SFA food standards
-- Saudi Arabia: SFDA food-grade standards
-- UAE: GSO food standards
-
-[Medical Devices]
-- US: FDA Class I/II/III, 510(k), 21 CFR Part 820
-- EU: MDR 2017/745, CE MDD/MDR
-
-[Chemical-Containing Products]
-- US: FDA (cosmetics/food), EPA (pesticides)
-- EU: EU 1223/2009 (cosmetics), REACH
-
-[Magnetic Products]
-- US: FTC 15 CFR 1309 (magnetic safety strength test)
-- EU: EN 62115 (magnetic toy safety)
-
-[Flammable Products]
-- DOT: Department of Transportation certification
-- IATA/ICAO: Air transport regulations
-- UN Packaging: UN-rated packaging certification
-
-OUTPUT CONSTRAINTS (STRICT - REDUCES TOKENS BY 40%+):
-- Summary: MAX 2 sentences (40 words)
-- Each recommendation reason: MAX 30 words (1 sentence)
-- Each recommendation action: MAX 20 words (1 sentence)
-- Total recommendations: 3-6 only (omit low-severity optional ones)
-- Each estimatedCost/estimatedTime: MAX 10 words
-- No introductions, no summaries, no disclaimers
-
-Certification NAMES can include Chinese characters where relevant (e.g., "CCC Certification (CCC认证)"), but ALL descriptions, reasons, actions, and summaries MUST be entirely in English.
-When naming certifications in the output, use: "English Name (Chinese if applicable)" — e.g., "FCC Certification", "CE Marking (CE认证)", "PSE Diamond (PSE菱形认证)"
-The reason field MUST explain in English WHY this specific product needs this certification.
-The action field MUST provide English, step-by-step instructions.
-`;
+EXAMPLE OUTPUT for "Wireless Bluetooth headphones":
+{
+  "summary": "Wireless Bluetooth headphones require FCC certification for RF compliance, UL safety testing for the battery, and standard electrical safety compliance for the US market.",
+  "recommendations": [
+    {
+      "name": "FCC Certification",
+      "required": true,
+      "desc": "Federal Communications Commission certification for wireless devices",
+      "severity": "high",
+      "reason": "Bluetooth 5.0 wireless transmission requires FCC Part 15B compliance",
+      "estimatedCost": "$1,000 - $3,000",
+      "estimatedTime": "2-3 weeks",
+      "action": "Submit device to FCC-recognized lab for testing; obtain FCC ID",
+      "needsThirdParty": true,
+      "confidence": "high",
+      "priorityLabel": "🔴 Mandatory"
+    },
+    {
+      "name": "UN38.3 + MSDS",
+      "required": true,
+      "desc": "Lithium battery transport safety certification",
+      "severity": "high",
+      "reason": "Built-in lithium battery requires UN38.3 transport testing for shipping",
+      "estimatedCost": "$500 - $1,500",
+      "estimatedTime": "1-2 weeks",
+      "action": "Submit battery samples for UN38.3 testing; obtain MSDS document",
+      "needsThirdParty": true,
+      "confidence": "high",
+      "priorityLabel": "🔴 Mandatory"
+    },
+    {
+      "name": "UL 62368-1",
+      "required": false,
+      "desc": "Audio/video equipment safety standard",
+      "severity": "medium",
+      "reason": "Electrically powered audio device with battery",
+      "estimatedCost": "$2,000 - $5,000",
+      "estimatedTime": "3-6 weeks",
+      "action": "Submit product to UL for safety evaluation",
+      "needsThirdParty": true,
+      "confidence": "medium",
+      "priorityLabel": "🟡 Recommended"
+    }
+  ],
+  "riskLevel": "high",
+  "warnings": []
+}`;
 
 // ============================================
 // 3. 申诉信生成

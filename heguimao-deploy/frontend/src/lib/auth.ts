@@ -16,7 +16,7 @@ export interface AuthState {
 
 const USERS_KEY = "compliance_cat_users";
 const SESSION_KEY = "compliance_cat_session";
-const AUTH_API_URL = "/api/auth";
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || "https://heguimao-api.senliri028.workers.dev/auth";
 
 /**
  * Generate a simple unique ID
@@ -89,9 +89,9 @@ function isLegacyHash(hash: string): boolean {
 
 /**
  * Verify a password against a stored PBKDF2 hash.
- * Extracts salt from the stored hash string and re-derives to compare.
+ * Exported for use by Profile.tsx password change flow.
  */
-async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
   try {
     if (!storedHash.startsWith("pbkdf2_")) {
       // Legacy hash — use simpleHash for comparison

@@ -46,7 +46,8 @@ export function Appeal() {
     setCopied(false);
     try {
       const languageLabel: Record<string, string> = { en: "English", zh: "中文", ja: "日本語", de: "Deutsch" };
-      const response = await fetch("/api/chat", {
+      const workerUrl = import.meta.env.VITE_WORKER_URL || "https://heguimao-api.senliri028.workers.dev";
+      const response = await fetch(`${workerUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
