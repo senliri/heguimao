@@ -56,9 +56,9 @@ export function Pricing() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Upgrade on server (source of truth)
-      const serverOk = await upgradePlanOnServer(selectedPlan);
-      if (!serverOk) {
-        alert(t("pricing.server_upgrade_fail"));
+      const result = await upgradePlanOnServer(selectedPlan);
+      if (!result.success) {
+        alert(result.error || t("pricing.server_upgrade_fail"));
         return;
       }
       

@@ -148,7 +148,10 @@ export async function syncSubscriptionFromServer(): Promise<Subscription | null>
       body: JSON.stringify({ action: 'get' }),
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn(`Subscription sync failed: HTTP ${response.status}`);
+      return null;
+    }
 
     const data = await response.json();
     const subscription: Subscription = {
@@ -163,14 +166,14 @@ export async function syncSubscriptionFromServer(): Promise<Subscription | null>
     saveSubscription(subscription);
     return subscription;
   } catch (e) {
-    console.warn('Failed to sync subscription from server:', e);
+    console.error('Subscription sync error:', e instanceof Error ? e.message : String(e));
     return null;
   }
 }
 
-export async function upgradePlanOnServer(plan: PlanType): Promise<boolean> {
+export async function upgradePlanOnServer(plan: PlanType): Promise<{ success: boolean; error?: string }> {
   const token = getAuthToken();
-  if (!token) return false;
+  if (!token) return { success: false, error: 'Not authenticated' };
 
   try {
     const response = await fetch(`${WORKER_URL}/subscription`, {
@@ -182,16 +185,25 @@ export async function upgradePlanOnServer(plan: PlanType): Promise<boolean> {
       body: JSON.stringify({ action: 'upgrade', plan }),
     });
 
-    if (!response.ok) return false;
+    if (!response.ok) {
+      let errorMsg = 'Upgrade failed';
+      try {
+        const data = await response.json();
+        errorMsg = data.error || errorMsg;
+      } catch { /* ignore parse error */ }
+      console.error(`Subscription upgrade failed: HTTP ${response.status} - ${errorMsg}`);
+      return { success: false, error: errorMsg };
+    }
 
     const data = await response.json();
     if (data.success) {
       upgradePlan(plan);
-      return true;
+      return { success: true };
     }
-    return false;
+    return { success: false, error: data.error || 'Unknown error' };
   } catch (e) {
-    console.warn('Failed to upgrade plan on server:', e);
-    return false;
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('Subscription upgrade error:', msg);
+    return { success: false, error: msg };
   }
 }

@@ -55,7 +55,7 @@ const TIER_CONFIG: Record<string, SubscriptionTier> = {
 };
 
 async function getUserSubscription(userId: string, env: Env): Promise<SubscriptionTier> {
-  const kv = (env as any).USER_DB;
+  const kv = (env as any).SUB_DB;
   if (!kv) return TIER_CONFIG.free;
   
   const key = `sub:${userId}`;
@@ -71,7 +71,7 @@ async function getUserSubscription(userId: string, env: Env): Promise<Subscripti
 }
 
 async function incrementSubscriptionUsage(userId: string, env: Env): Promise<boolean> {
-  const kv = (env as any).USER_DB;
+  const kv = (env as any).SUB_DB;
   if (!kv) return true; // No KV, skip enforcement
   
   const key = `sub:${userId}`;
@@ -100,7 +100,7 @@ async function incrementSubscriptionUsage(userId: string, env: Env): Promise<boo
 }
 
 async function recordReport(userId: string, env: Env): Promise<boolean> {
-  const kv = (env as any).USER_DB;
+  const kv = (env as any).SUB_DB;
   if (!kv) return true;
   
   const key = `sub:${userId}`;
@@ -701,7 +701,7 @@ export default {
 // ─── Subscription Handler ───────────────────────────────────────────
 
 async function handleSubscriptionAPI(request: Request, env: Env): Promise<Response> {
-  const kv = (env as any).USER_DB;
+  const kv = (env as any).SUB_DB;
   if (!kv) {
     return jsonResponse({ error: 'Subscription service not available' }, 503);
   }

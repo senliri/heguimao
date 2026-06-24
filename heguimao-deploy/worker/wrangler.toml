@@ -27,3 +27,8 @@ JWT_SECRET = "heguimao-jwt-secret-2024-change-in-production"
 [[kv_namespaces]]
 binding = "USER_DB"
 id = "0eec625e553540d9bd1507f2a56fbdd9"
+
+# Subscription usage KV namespace (separate from USER_DB)
+[[kv_namespaces]]
+binding = "SUB_DB"
+id = "0eec625e553540d9bd1507f2a56fbdd9"
