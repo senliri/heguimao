@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { t, useState, useEffect} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle, User as UserIcon, ArrowLeft } from "lucide-react";
-import { registerUser, loginUser, requestPasswordReset, verifyResetToken, resetPassword, type User, getSession } from "../lib/auth";
+import { registerUser, loginUser, requestt("auth.password")Reset, verifyResetToken, resett("auth.password"), type User, getSession } from "../lib/auth";
 
 type Mode = "login" | "register" | "reset-request" | "reset-password";
 
@@ -9,9 +9,9 @@ export function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, sett("auth.password")] = useState("");
   const [name, setName] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showt("auth.password"), setShowt("auth.password")] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -38,7 +38,7 @@ export function AuthPage() {
       setMode("reset-password");
       const verification = verifyResetToken(token);
       if (!verification.valid) {
-        setError("This reset link has expired or is invalid. Please request a new one.");
+        setError(t("auth.reset_expired"));
       }
     }
   }, [checkingAuth]);
@@ -59,7 +59,7 @@ export function AuthPage() {
           result = await loginUser(email, password);
         }
       } else if (mode === "reset-request") {
-        result = await requestPasswordReset(email);
+        result = await requestt("auth.password")Reset(email);
         if (result.success) {
           setSuccess("We've sent a password reset link to your email. Please check your inbox.");
           setLoading(false);
@@ -67,13 +67,13 @@ export function AuthPage() {
         }
       } else if (mode === "reset-password") {
         if (!resetToken) {
-          setError("No reset token found. Please request a new password reset link.");
+          setError(t("auth.no_token"));
           setLoading(false);
           return;
         }
-        result = await resetPassword(resetToken, password);
+        result = await resett("auth.password")(resetToken, password);
         if (result.success) {
-          setSuccess("Password reset successful! You can now sign in with your new password.");
+          setSuccess(t("auth.reset_success"));
           setTimeout(() => {
             setMode("login");
           }, 2000);
@@ -85,17 +85,17 @@ export function AuthPage() {
       }
 
       if (result.success && result.user) {
-        setSuccess(mode === "register" ? "Registration successful! Logging you in..." : "Login successful!");
+        setSuccess(mode === "register" ? t("auth.register_success") : t("auth.login_success"));
         
         // Show success message briefly, then navigate to home
         setTimeout(() => {
           navigate("/", { replace: true });
         }, 800);
       } else {
-        setError(result.error || "Authentication failed");
+        setError(result.error || t("auth.auth_failed"));
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      setError(t("auth.error"));
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export function AuthPage() {
       {checkingAuth ? (
         <div className="flex items-center gap-2 text-slate-400">
           <Loader2 className="h-6 w-6 animate-spin" />
-          Checking authentication...
+          t("auth.checking")
         </div>
       ) : (
       <div className="w-full max-w-md">
@@ -117,10 +117,10 @@ export function AuthPage() {
           </div>
           <h1 className="text-3xl font-bold text-white">Compliance Cat</h1>
           <p className="text-slate-400 mt-2">
-            {mode === "login" ? "Sign in to your account" : 
-             mode === "register" ? "Create your account" :
-             mode === "reset-request" ? "Reset your password" :
-             mode === "reset-password" ? "Set new password" :
+            {mode === "login" ? t("auth.sign_in_account") : 
+             mode === "register" ? t("auth.create_account") :
+             mode === "reset-request" ? t("auth.reset_password") :
+             mode === "reset-password" ? t("auth.set_new_password") :
              "Compliance Cat"}
           </p>
         </div>
@@ -138,7 +138,7 @@ export function AuthPage() {
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              Sign In
+              t("auth.sign_in")
             </button>
             <button
               onClick={() => { setMode("register"); setError(""); setSuccess(""); }}
@@ -148,7 +148,7 @@ export function AuthPage() {
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              Register
+              t("auth.register")
             </button>
           </div>
           )}
@@ -160,7 +160,7 @@ export function AuthPage() {
             className="flex items-center gap-1 text-slate-400 hover:text-white text-sm mb-4 transition"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to Sign In
+            Back to t("auth.sign_in")
           </button>
           )}
 
@@ -174,7 +174,7 @@ export function AuthPage() {
                 type="text"
                 value={name}
                 onChange={(e) => { setName(e.target.value); setError(""); }}
-                placeholder="Full name"
+                placeholder=t("auth.full_name")
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
                 required
               />
@@ -188,31 +188,31 @@ export function AuthPage() {
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                placeholder="Email address"
+                placeholder=t("auth.email_address")
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
                 required
               />
             </div>
 
-            {/* Password */}
+            {/* t("auth.password") */}
             {mode !== "reset-request" && (
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <input
-                type={showPassword ? "text" : "password"}
+                type={showt("auth.password") ? "text" : "password"}
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                placeholder="Password"
+                onChange={(e) => { sett("auth.password")(e.target.value); setError(""); }}
+                placeholder=t("auth.password")
                 className="w-full pl-10 pr-12 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
                 required
                 minLength={6}
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowt("auth.password")(!showt("auth.password"))}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition"
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showt("auth.password") ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             )}
@@ -237,16 +237,16 @@ export function AuthPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {mode === "login" ? "Signing in..." : 
-                   mode === "register" ? "Creating account..." :
-                   mode === "reset-request" ? "Sending..." :
-                   "Resetting..."}
+                  {mode === "login" ? t("auth.signing_in") :
+                   mode === "register" ? t("auth.creating_account") :
+                   mode === "reset-request" ? t("auth.sending") :
+                   t("auth.resetting")}
                 </>
               ) : (
-                mode === "login" ? "Sign In" :
-                mode === "register" ? "Create Account" :
-                mode === "reset-request" ? "Send Reset Link" :
-                "Reset Password"
+                mode === "login" ? t("auth.sign_in") :
+                mode === "register" ? t("auth.create_account_btn") :
+                mode === "reset-request" ? t("auth.send_reset_link") :
+                "Reset t("auth.password")"
               )}
             </button>
           </form>
@@ -258,19 +258,19 @@ export function AuthPage() {
               onClick={() => { setMode("reset-request"); setError(""); setSuccess(""); setEmail(""); }}
               className="text-sm text-blue-400 hover:text-blue-300 transition"
             >
-              Forgot password?
+              t("auth.forgot_password")
             </button>
           </div>
 
-          {/* Password hint (register and reset-password only) */}
+          {/* t("auth.password") hint (register and reset-password only) */}
           <p className="text-xs text-slate-500 mt-4" hidden={!(mode === "register" || mode === "reset-password")}>
-            Password must be at least 6 characters long
+            t("auth.password") must be at least 6 characters long
           </p>
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs text-slate-600 mt-8">
-          Powered by Agnes AI • Compliance Cat
+          t("auth.footer")
         </p>
       </div>
       )}

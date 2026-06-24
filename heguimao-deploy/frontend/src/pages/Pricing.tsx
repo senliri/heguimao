@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { t, useState, useEffect} from "react";
 import { Check, X, Star, Crown, Zap, ArrowRight, CreditCard, Shield, Clock, HelpCircle, Download, Globe } from "lucide-react";
 import { PLAN_CONFIG, upgradePlan, getSubscription, type PlanType, syncSubscriptionFromServer, upgradePlanOnServer } from "../lib/subscription";
 import { logMonitor } from "../lib/monitor";
@@ -33,7 +33,7 @@ export function Pricing() {
         setPaymentRecords(JSON.parse(data));
       }
     } catch (e) {
-      console.error("Failed to load payment records", e);
+      console.error(t("pricing.failed_load_records"), e);
     }
     // Sync subscription from server if user is logged in
     syncSubscriptionFromServer().catch(console.warn);
@@ -41,7 +41,7 @@ export function Pricing() {
 
   const handleUpgrade = async (plan: PlanType) => {
     if (plan === currentPlan) {
-      alert("You're already on this plan!");
+      alert(t("pricing.already_on_plan"));
       return;
     }
 
@@ -52,13 +52,13 @@ export function Pricing() {
   const processPayment = async () => {
     setProcessing(true);
     try {
-      // Simulate payment processing (in production, integrate Stripe/PayPal)
+      // Simulate payment processing (in production, integrate t("pricing.stripe")/t("pricing.paypal"))
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Upgrade on server (source of truth)
       const serverOk = await upgradePlanOnServer(selectedPlan);
       if (!serverOk) {
-        alert("Server upgrade failed. Please try again.");
+        alert(t("pricing.server_upgrade_fail"));
         return;
       }
       
@@ -97,7 +97,7 @@ export function Pricing() {
         category: "auth",
         message: `Payment failed: ${(err as Error).message}`,
       });
-      alert("Payment failed. Please try again.");
+      alert(t("pricing.payment_failed"));
     } finally {
       setProcessing(false);
     }
@@ -109,10 +109,10 @@ export function Pricing() {
       name: "Free",
       price: 0,
       features: [
-        "10 API calls/month",
-        "5 reports/month",
-        "Basic compliance check",
-        "Community support",
+        t("pricing.api_10"),
+        t("pricing.reports_5"),
+        t("pricing.basic_check"),
+        t("pricing.community_support"),
       ],
       notPopular: true,
     },
@@ -121,11 +121,11 @@ export function Pricing() {
       name: "Basic",
       price: 9.99,
       features: [
-        "100 API calls/month",
-        "50 reports/month",
-        "Advanced compliance check",
-        "Priority email support",
-        "Basic analytics",
+        t("pricing.api_100"),
+        t("pricing.reports_50"),
+        t("pricing.advanced_check"),
+        t("pricing.email_support"),
+        t("pricing.basic_analytics"),
       ],
       popular: true,
     },
@@ -134,13 +134,13 @@ export function Pricing() {
       name: "Pro",
       price: 29.99,
       features: [
-        "1000 API calls/month",
-        "500 reports/month",
-        "Full compliance suite",
-        "Export to CSV/PDF",
-        "Priority phone support",
-        "Advanced analytics",
-        "Custom compliance templates",
+        t("pricing.api_1000"),
+        t("pricing.reports_500"),
+        t("pricing.full_suite"),
+        t("pricing.export_csv_pdf"),
+        t("pricing.phone_support"),
+        t("pricing.advanced_analytics"),
+        t("pricing.custom_templates"),
       ],
     },
   ];
@@ -148,8 +148,8 @@ export function Pricing() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-white mb-4">Choose Your Plan</h1>
-        <p className="text-lg text-slate-400">Start free, upgrade when you need more</p>
+        <h1 className="text-3xl font-bold text-white mb-4">t("pricing.choose_plan")</h1>
+        <p className="text-lg text-slate-400">t("pricing.start_free")</p>
       </div>
 
       {/* Plans Grid */}
@@ -166,7 +166,7 @@ export function Pricing() {
             {plan.popular && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                  Most Popular
+                  t("pricing.popular")
                 </span>
               </div>
             )}
@@ -183,7 +183,7 @@ export function Pricing() {
                 <span className="text-lg font-normal text-slate-400">/month</span>
               </div>
               {plan.price === 0 && (
-                <span className="text-sm text-slate-400">Free forever</span>
+                <span className="text-sm text-slate-400">t("pricing.free_forever")</span>
               )}
             </div>
 
@@ -205,7 +205,7 @@ export function Pricing() {
                   : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
-              {plan.type === currentPlan ? "Current Plan" : processing ? "Processing..." : `Upgrade to ${plan.name}`}
+              {plan.type === currentPlan ? t("pricing.current_plan") : processing ? t("pricing.processing") : `Upgrade to ${plan.name}`}
             </button>
           </div>
         ))}
@@ -218,18 +218,18 @@ export function Pricing() {
           className="flex items-center gap-2 text-white hover:text-blue-400 transition"
         >
           <Clock className="h-4 w-4" />
-          Payment History ({paymentRecords.length})
+          t("pricing.payment_history") + " (" + paymentRecords.length + ")"
         </button>
         
         {showHistory && (
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-              <h3 className="text-sm font-semibold text-white">Recent Payments</h3>
+              <h3 className="text-sm font-semibold text-white">t("pricing.recent_payments")</h3>
             </div>
             <div className="divide-y divide-white/5">
               {paymentRecords.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">
-                  No payment records yet
+                  t("pricing.no_records")
                 </div>
               ) : (
                 paymentRecords.map((record) => (
@@ -260,16 +260,16 @@ export function Pricing() {
           <h3 className="text-lg font-semibold text-white mb-4">Frequently Asked Questions</h3>
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-medium text-white">Can I cancel my subscription?</h4>
-              <p className="text-sm text-slate-400 mt-1">Yes, you can cancel anytime. Your plan will remain active until the end of the billing period.</p>
+              <h4 className="text-sm font-medium text-white">t("pricing.faq_cancel_q")</h4>
+              <p className="text-sm text-slate-400 mt-1">t("pricing.faq_cancel_a")</p>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-white">What happens when I reach my limit?</h4>
-              <p className="text-sm text-slate-400 mt-1">You'll be notified when you're close to your limit. You can upgrade to a higher plan or wait for the next month.</p>
+              <h4 className="text-sm font-medium text-white">t("pricing.faq_limit_q")</h4>
+              <p className="text-sm text-slate-400 mt-1">t("pricing.faq_limit_a")</p>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-white">Is there a refund policy?</h4>
-              <p className="text-sm text-slate-400 mt-1">Yes, we offer a 30-day money-back guarantee for all paid plans.</p>
+              <h4 className="text-sm font-medium text-white">t("pricing.faq_refund_q")</h4>
+              <p className="text-sm text-slate-400 mt-1">t("pricing.faq_refund_a")</p>
             </div>
           </div>
         </div>
@@ -279,15 +279,15 @@ export function Pricing() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-slate-300">All payments are encrypted and secure</span>
+              <span className="text-sm text-slate-300">t("pricing.sec_encrypted")</span>
             </div>
             <div className="flex items-center gap-3">
               <CreditCard className="h-5 w-5 text-blue-400" />
-              <span className="text-sm text-slate-300">We support major credit cards and digital wallets</span>
+              <span className="text-sm text-slate-300">t("pricing.sec_cards")</span>
             </div>
             <div className="flex items-center gap-3">
               <HelpCircle className="h-5 w-5 text-purple-400" />
-              <span className="text-sm text-slate-300">Need help? Contact our support team</span>
+              <span className="text-sm text-slate-300">t("pricing.sec_help")</span>
             </div>
           </div>
         </div>
@@ -297,15 +297,15 @@ export function Pricing() {
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl border border-white/10 p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-white mb-4">Complete Payment</h3>
+            <h3 className="text-xl font-bold text-white mb-4">t("pricing.complete_payment")</h3>
             
             <div className="mb-6">
-              <div className="text-sm text-slate-400 mb-2">Selected Plan</div>
+              <div className="text-sm text-slate-400 mb-2">t("pricing.selected_plan")</div>
               <div className="text-lg font-medium text-white">{PLAN_CONFIG[selectedPlan].name} - ${PLAN_CONFIG[selectedPlan].price}/month</div>
             </div>
 
             <div className="mb-6">
-              <div className="text-sm text-slate-400 mb-2">Payment Method</div>
+              <div className="text-sm text-slate-400 mb-2">t("pricing.payment_method")</div>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setPaymentMethod("card")}
@@ -315,7 +315,7 @@ export function Pricing() {
                       : "border-white/10 bg-white/5 text-slate-400"
                   }`}
                 >
-                  Credit Card
+                  t("pricing.cc")
                 </button>
                 <button
                   onClick={() => setPaymentMethod("paypal")}
@@ -325,7 +325,7 @@ export function Pricing() {
                       : "border-white/10 bg-white/5 text-slate-400"
                   }`}
                 >
-                  PayPal
+                  t("pricing.paypal")
                 </button>
                 <button
                   onClick={() => setPaymentMethod("stripe")}
@@ -335,7 +335,7 @@ export function Pricing() {
                       : "border-white/10 bg-white/5 text-slate-400"
                   }`}
                 >
-                  Stripe
+                  t("pricing.stripe")
                 </button>
               </div>
             </div>
@@ -345,14 +345,14 @@ export function Pricing() {
                 onClick={() => setShowPaymentModal(false)}
                 className="flex-1 py-3 px-4 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition"
               >
-                Cancel
+                t("pricing.cancel")
               </button>
               <button
                 onClick={processPayment}
                 disabled={processing}
                 className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
               >
-                {processing ? "Processing..." : `Pay $${PLAN_CONFIG[selectedPlan].price}`}
+                {processing ? t("pricing.processing") : `Pay ${PLAN_CONFIG[selectedPlan].price}`}
               </button>
             </div>
           </div>
@@ -366,8 +366,8 @@ export function Pricing() {
             <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
               <Check className="h-8 w-8 text-green-400" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Payment Successful!</h3>
-            <p className="text-slate-400">Your subscription has been upgraded to {PLAN_CONFIG[selectedPlan].name} plan.</p>
+            <h3 className="text-xl font-bold text-white mb-2">t("pricing.success_title")</h3>
+            <p className="text-slate-400">t("pricing.success_msg")</p>
           </div>
         </div>
       )}

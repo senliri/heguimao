@@ -15,7 +15,7 @@ import {
 import { inferProductProfile, generateRecommendations, type RecommendationItem } from "../lib/recommend";
 import { generateDiagnosis, isProfileComplete, type ProductProfile, type ProductProfile as AgentProfile } from "../lib/agent";
 import type { DiagnosisResult } from "../lib/agent";
-import { store } from "../lib/store";
+import { t, store } from "../lib/store";
 
 // ============================================
 // Hybrid merge: AI reasoning + structured data fields
@@ -24,7 +24,7 @@ function mergeAiWithStructuredData(
   aiResult: DiagnosisResult,
   rawCompliance: ComplianceItem[],
   marketId: string,
-  profile: ReturnType<typeof inferProductProfile>,
+  profile: Returnt("report.cert_type")<typeof inferProductProfile>,
   catId: string
 ): RecommendationItem[] {
   // Build a lookup of AI recommendations by certification name (case-insensitive)
@@ -186,13 +186,13 @@ export function Report() {
         });
         // Save to history
         store.saveReport({
-          productType: aiProduct,
+          productt("report.cert_type"): aiProduct,
           market: marketId,
           profile: { ...(useProfile as Record<string, unknown>) },
           diagnosis: { ...aiResultData },
         });
       } catch (err) {
-        console.error("AI diagnosis failed:", err);
+        console.error(t("report.ai_diag_failed"), err);
       } finally {
         setAiLoading(false);
       }
@@ -276,8 +276,8 @@ export function Report() {
 
       doc.save(`compliance_cat_report_${marketId}_${catId}.pdf`);
     } catch (err) {
-      console.error("PDF export failed:", err);
-      alert("PDF export failed. Please try again.");
+      console.error(t("report.pdf_export_failed"), err);
+      alert(t("report.pdf_export_retry"));
     } finally {
       setIsGenerating(false);
     }
@@ -301,9 +301,9 @@ export function Report() {
       // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(`${shareText}\n\n${window.location.href}`);
-        alert("Report summary copied to clipboard!");
+        alert(t("report.share_copy_ok"));
       } catch (err) {
-        alert("Unable to share. Please try again.");
+        alert(t("report.share_fail"));
       }
     }
   };
@@ -326,7 +326,7 @@ export function Report() {
         return `${i+1}. ${item.name}${req} — ${item.reason}\n   Severity: ${item.severity} | Time: ${item.estimatedTime} | Cost: ${item.estimatedCost}`;
       }).join('\n\n');
       
-      const body = `Compliance Check Report\n` +
+      const body = `t("report.title")\n` +
         `Product: ${productName}\n` +
         `Market: ${marketName}\n` +
         `Date: ${new Date().toLocaleDateString()}\n\n` +
@@ -345,8 +345,8 @@ export function Report() {
         setUserEmail('');
       }, 5000);
     } catch (err) {
-      console.error('Email send failed:', err);
-      setEmailError(err instanceof Error ? err.message : 'Failed to open email client');
+      console.error(t("report.email_send_fail"), err);
+      setEmailError(err instanceof Error ? err.message : 't("report.email_client_fail")');
     } finally {
       setIsSendingEmail(false);
     }
@@ -378,7 +378,7 @@ export function Report() {
             <div className="flex items-center gap-3">
               <FileText className="h-8 w-8 text-blue-400" />
               <div>
-                <h1 className="text-xl font-bold">Compliance Check Report</h1>
+                <h1 className="text-xl font-bold">t("report.title")</h1>
                 <p className="text-sm text-slate-400">
                   {market?.flag} {market?.label || "US"}
                   {isAiMode && aiProduct && (
@@ -392,34 +392,34 @@ export function Report() {
                   {sub && !isAiMode && (
                     <> · {sub.label}</>
                   )}
-                  {!category && !isAiMode && <span className="text-amber-400">⚠ No category selected, using general data</span>}
+                  {!category && !isAiMode && <span className="text-amber-400">⚠ t("report.no_cat_warn")</span>}
                 </p>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
               <button onClick={() => setActiveTab("recommend")} className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm transition ${activeTab === "recommend" ? "bg-blue-600 text-white" : "border border-white/10 text-slate-400 hover:text-white"}`}>
                 <Sparkles className="h-3.5 w-3.5" />
-                AI Recommendations
+                t("report.ai_recs_tab")
               </button>
               <button onClick={() => setActiveTab("compliance")} className={`rounded-xl px-4 py-2 text-sm transition ${activeTab === "compliance" ? "bg-blue-600 text-white" : "border border-white/10 text-slate-400 hover:text-white"}`}>
-                Compliance Checklist
+                t("report.checklist")
               </button>
               <button onClick={() => setActiveTab("prerequisites")} className={`rounded-xl px-4 py-2 text-sm transition ${activeTab === "prerequisites" ? "bg-blue-600 text-white" : "border border-white/10 text-slate-400 hover:text-white"}`}>
                 <Shield className="h-3.5 w-3.5" />
-                Market Prerequisites
+                t("report.market_prereq")
               </button>
               <button onClick={() => setActiveTab("action")} className={`rounded-xl px-4 py-2 text-sm transition ${activeTab === "action" ? "bg-blue-600 text-white" : "border border-white/10 text-slate-400 hover:text-white"}`}>
-                Action Plan
+                t("report.action_plan")
               </button>
             </div>
           </div>
 
-          {/* AI Smart Analysis Panel */}
+          {/* t("report.ai_smart") Panel */}
           <div className="mt-5 rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-blue-500/5 p-4">
             {isAiMode && aiLoading && (
               <div className="flex items-center gap-2 text-sm text-purple-300 mb-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                AI is analyzing product compliance risks...
+                t("report.analyzing")
               </div>
             )}
             {isAiMode && aiResult && (
@@ -441,52 +441,52 @@ export function Report() {
             )}
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-400" />
-              <span className="text-sm font-semibold text-purple-300">AI Smart Analysis</span>
-              <span className="text-xs text-purple-400/70 ml-auto">Auto-matched based on product features</span>
+              <span className="text-sm font-semibold text-purple-300">t("report.ai_smart")</span>
+              <span className="text-xs text-purple-400/70 ml-auto">t("report.auto_match")</span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div className="rounded-lg bg-white/5 px-3 py-2 text-center">
                 <p className="text-lg font-bold text-purple-300">{recommendCount}</p>
-                <p className="text-xs text-purple-400/70">Priority</p>
+                <p className="text-xs text-purple-400/70">t("report.priority")</p>
               </div>
               <div className="rounded-lg bg-white/5 px-3 py-2 text-center">
                 <p className="text-lg font-bold text-red-400">{highCount}</p>
-                <p className="text-xs text-red-400/70">High Risk</p>
+                <p className="text-xs text-red-400/70">t("report.high_risk")</p>
               </div>
               <div className="rounded-lg bg-white/5 px-3 py-2 text-center">
                 <p className="text-lg font-bold text-amber-400">{mediumCount}</p>
-                <p className="text-xs text-amber-400/70">Medium Risk</p>
+                <p className="text-xs text-amber-400/70">t("report.med_risk")</p>
               </div>
               <div className="rounded-lg bg-white/5 px-3 py-2 text-center">
                 <p className="text-lg font-bold text-blue-400">{rawCompliance.length}</p>
-                <p className="text-xs text-blue-400/70">Total Items</p>
+                <p className="text-xs text-blue-400/70">t("report.total_items")</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* AI Recommendations Tab */}
+      {/* t("report.ai_recs_tab") Tab */}
       {activeTab === "recommend" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-5 w-5 text-purple-400" />
-              <h2 className="text-lg font-semibold">AI Smart Recommendations</h2>
+              <h2 className="text-lg font-semibold">t("report.ai_recs")</h2>
               <span className="ml-auto text-xs text-slate-500">{isAiMode ? `AI Diagnosis · ${aiProduct}` : `Based on ${category?.label}${sub ? ` + ${sub.label}` : ""} in ${market?.label}`}</span>
             </div>
 
             {isAiMode && aiLoading ? (
               <div className="py-16 text-center">
                 <Loader2 className="mx-auto h-8 w-8 animate-spin text-purple-400" />
-                <p className="mt-3 text-slate-400">AI is generating diagnosis report...</p>
+                <p className="mt-3 text-slate-400">t("report.generating")</p>
               </div>
             ) : displayRecommendations.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
                 <Info className="mx-auto h-10 w-10 text-slate-500" />
-                <p className="mt-3 text-slate-400">No compliance data available for this category and market</p>
+                <p className="mt-3 text-slate-400">t("report.no_data")</p>
                 <Link to="/" className="mt-4 inline-flex items-center gap-1 rounded-xl bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700">
-                  Return Home
+                  t("report.return_home")
                 </Link>
               </div>
             ) : (
@@ -495,7 +495,7 @@ export function Report() {
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Zap className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm font-semibold text-yellow-300">🔴 Priority — These items have the biggest impact</span>
+                      <span className="text-sm font-semibold text-yellow-300">🔴 t("report.priority") — These items have the biggest impact</span>
                     </div>
                     <div className="space-y-2">
                       {displayRecommendations.filter(r => r.confidence === "high").map((item, i) => (
@@ -509,7 +509,7 @@ export function Report() {
                   <div className="mt-5">
                     <div className="flex items-center gap-2 mb-3">
                       <TrendingUp className="h-4 w-4 text-amber-400" />
-                      <span className="text-sm font-semibold text-amber-300">🟡 Recommended — Improve compliance completeness</span>
+                      <span className="text-sm font-semibold text-amber-300">🟡 t("report.recommended") — Improve compliance completeness</span>
                     </div>
                     <div className="space-y-2">
                       {displayRecommendations.filter(r => r.confidence === "medium").map((item, i) => (
@@ -523,7 +523,7 @@ export function Report() {
                   <div className="mt-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Target className="h-4 w-4 text-green-400" />
-                      <span className="text-sm font-semibold text-green-300">🟢 Optional — Depends on your product</span>
+                      <span className="text-sm font-semibold text-green-300">t("report.optional")</span>
                     </div>
                     <div className="space-y-2">
                       {displayRecommendations.filter(r => r.confidence === "low").map((item, i) => (
@@ -546,7 +546,7 @@ export function Report() {
                 ) : (
                   <Download className="h-4 w-4" />
                 )}
-                {isGenerating ? "Generating..." : "Download Report (PDF)"}
+                {isGenerating ? t("report.generating") : t("report.export_pdf")}
               </button>
               <button
                 onClick={handleShare}
@@ -554,11 +554,11 @@ export function Report() {
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-50"
               >
                 <Share2 className="h-4 w-4" />
-                Share Report
+                t("report.share")
               </button>
               <Link to="/appeal" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700">
                 <ClipboardList className="h-4 w-4" />
-                View Appeal Guide
+                t("report.appeal_guide")
               </Link>
             </div>
 
@@ -566,10 +566,10 @@ export function Report() {
             <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
               <div className="flex items-center gap-2 mb-3">
                 <Send className="h-5 w-5 text-blue-400" />
-                <h3 className="text-lg font-semibold text-white">Send Report via Email</h3>
+                <h3 className="text-lg font-semibold text-white">t("report.send_email")</h3>
               </div>
               <p className="text-sm text-slate-400 mb-4">
-                Opens your default email client with the report summary pre-filled
+                t("report.send_email_desc")
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -593,12 +593,12 @@ export function Report() {
                   ) : emailSent ? (
                     <>
                       <CheckCircle className="h-4 w-4" />
-                      Sent!
+                      t("report.sent")
                     </>
                   ) : (
                     <>
                       <Send className="h-4 w-4" />
-                      Open Email Client
+                      t("report.open_email")
                     </>
                   )}
                 </button>
@@ -608,7 +608,7 @@ export function Report() {
               )}
               {emailSent && (
                 <p className="mt-2 text-xs text-green-400">
-                  Email client opened! Complete and send the email manually.
+                  t("report.email_opened")
                 </p>
               )}
             </div>
@@ -617,16 +617,16 @@ export function Report() {
         </section>
       )}
 
-      {/* Compliance Checklist Tab */}
+      {/* t("report.checklist") Tab */}
       {activeTab === "compliance" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
-          <h2 className="text-lg font-semibold">Detailed Compliance Checklist</h2>
+          <h2 className="text-lg font-semibold">Detailed t("report.checklist")</h2>
           {rawCompliance.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
               <Info className="mx-auto h-10 w-10 text-slate-500" />
-              <p className="mt-3 text-slate-400">No detailed compliance data for this category and market</p>
+              <p className="mt-3 text-slate-400">t("report.no_detail")</p>
               <Link to="/" className="mt-4 inline-flex items-center gap-1 rounded-xl bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700">
-                Return Home
+                t("report.return_home")
               </Link>
             </div>
           ) : (
@@ -648,9 +648,9 @@ export function Report() {
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold text-white">{item.name}</h3>
                           {item.required ? (
-                            <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs text-red-300">Mandatory</span>
+                            <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs text-red-300">t("report.mandatory")</span>
                           ) : (
-                            <span className="rounded-md bg-slate-500/20 px-2 py-0.5 text-xs text-slate-400">Recommended</span>
+                            <span className="rounded-md bg-slate-500/20 px-2 py-0.5 text-xs text-slate-400">t("report.recommended")</span>
                           )}
                         </div>
                         <p className="mt-1 text-sm text-slate-400">{item.desc}</p>
@@ -664,56 +664,56 @@ export function Report() {
         </section>
       )}
 
-      {/* Action Plan Tab */}
+      {/* t("report.action_plan") Tab */}
       {activeTab === "prerequisites" && (
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 mt-6">
-                <h2 className="text-lg font-semibold mb-4">Market Prerequisites & Business Risks</h2>
+                <h2 className="text-lg font-semibold mb-4">t("report.market_risks")</h2>
                 <div className="space-y-6">
                   <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-                    <h3 className="text-sm font-semibold text-amber-300 mb-3">Market Prerequisites</h3>
+                    <h3 className="text-sm font-semibold text-amber-300 mb-3">t("report.market_prereq")</h3>
                     <div className="space-y-2 text-sm text-slate-300">
                       {marketId === 'eu' && (
                         <div className="space-y-2">
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">EORI Number:</span> Required for customs. Apply via national tax authority.</div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">VAT Registration:</span> Mandatory. Register in each target country (DE: Umsatzsteuer-ID, FR: N&#x00b0; TVA).</div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">EPR Registration:</span> Extended Producer Responsibility by product type:<div className="mt-1 ml-4 text-xs text-slate-400 space-y-0.5"><div>&#x1F4E6; Packaging: LUCID (DE), &#x00e9;co-EMballages (FR)</div><div>&#x1F50C; WEEE: Register per country for electrical</div><div>&#x1F9D1; Battery: LUCID/BaterReg (DE), InfoBat (FR)</div></div></div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">EU Authorized Rep:</span> Required for CE marking. Must have physical EU address.</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.eori")</span> t("report.eori_d")</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.vat")</span> t("report.vat_d") (DE: Umsatzsteuer-ID, FR: N&#x00b0; TVA).</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.epr")</span> t("report.epr_d")<div className="mt-1 ml-4 text-xs text-slate-400 space-y-0.5"><div>📦 Packaging: LUCID (DE), &#x00e9;co-EMballages (FR)</div><div>♻️ WEEE: Register per country for electrical</div><div>🧑 Battery: LUCID/BaterReg (DE), InfoBat (FR)</div></div></div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.eu_rep")</span> t("report.eu_rep_d")</div></div>
                         </div>
                       )}
                       {marketId === 'uk' && (
                         <div className="space-y-2">
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">UK VAT:</span> Required if turnover exceeds &#x00a3;90,000 or via marketplaces.</div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">UK Responsible Person:</span> Required for UKCA marking. Must be UK-based.</div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">UK EPR:</span> New rules from 2025: separate registration for packaging, waste, batteries.</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.uk_vat")</span> Required if turnover exceeds &#x00a3;90,000 or via marketplaces.</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.uk_rp")</span> t("report.uk_rp_d")</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.uk_epr")</span> t("report.uk_epr_d")</div></div>
                         </div>
                       )}
                       {marketId === 'us' && (
                         <div className="space-y-2">
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">US Business Registration:</span> EIN (Employer ID) or SSN required for individual sellers.</div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">US Physical Address:</span> P.O. Boxes not accepted for compliance docs.</div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">Sales Tax:</span> Nexus varies by state. Use Amazon Tax or consult professional.</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.us_reg")</span> t("report.us_reg_d")</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.us_addr")</span> t("report.us_addr_d")</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.sales_tax")</span> t("report.sales_tax_d")</div></div>
                         </div>
                       )}
                       {marketId === 'jp' && (
                         <div className="space-y-2">
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">Japanese Tax ID:</span> Required for cross-border sales, via e-Tax system.</div></div>
-                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">Consumer Affairs Registration:</span> Required for food, cosmetics, certain consumer goods.</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.jp_tax")</span> t("report.jp_tax_d")</div></div>
+                          <div className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">t("report.consumers")</span> t("report.consumers_d")</div></div>
                         </div>
                       )}
                     </div>
                   </div>
                   <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-                    <h3 className="text-sm font-semibold text-red-300 mb-3">Corporate Entity Risks</h3>
+                    <h3 className="text-sm font-semibold text-red-300 mb-3">t("report.corp_risks")</h3>
                     <div className="space-y-2 text-sm text-slate-300">
-                      <div className="flex items-start gap-2"><span className="text-red-400 mt-0.5">&#x26A0;</span><div><span className="font-medium text-white">Shell Company Risk:</span> Amazon flags virtual offices, co-working spaces. Use verified physical address.</div></div>
-                      <div className="flex items-start gap-2"><span className="text-red-400 mt-0.5">&#x26A0;</span><div><span className="font-medium text-white">Name Matching:</span> Bank account, tax ID, and seller central name must match.</div></div>
-                      <div className="flex items-start gap-2"><span className="text-red-400 mt-0.5">&#x26A0;</span><div><span className="font-medium text-white">Document Verification:</span> May request utility bills, bank statements, or government ID.</div></div>
+                      <div className="flex items-start gap-2"><span className="text-red-400 mt-0.5">&#x26A0;</span><div><span className="font-medium text-white">t("report.shell")</span> t("report.shell_d")</div></div>
+                      <div className="flex items-start gap-2"><span className="text-red-400 mt-0.5">&#x26A0;</span><div><span className="font-medium text-white">t("report.name_match")</span> t("report.name_d")</div></div>
+                      <div className="flex items-start gap-2"><span className="text-red-400 mt-0.5">&#x26A0;</span><div><span className="font-medium text-white">t("report.doc_verify")</span> t("report.doc_d")</div></div>
                     </div>
                   </div>
                   <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
                     <h3 className="text-sm font-semibold text-green-300 mb-3">Recommended Testing Laboratories</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-300">
-                      {[{ name: 'SGS', site: 'sgs.com', desc: 'Global leader, all certifications', price: 'Med-High' }, { name: '&#x00DC;V Rheinland', site: 'tuv.com', desc: 'Strong in EU/CE', price: 'Med-High' }, { name: 'Intertek', site: 'intertek.com', desc: 'Wide coverage', price: 'Medium' }, { name: 'CTI', site: 'cti-group.com', desc: 'China-based, competitive', price: 'Low-Med' }, { name: 'Bureau Veritas', site: 'bureauveritas.com', desc: 'Food/contact specialist', price: 'Med-High' }, { name: 'Eurofins', site: 'eurofins.com', desc: 'Food/cosmetics', price: 'High' }].map((lab, idx) => (
+                      {[{ name: 'SGS', site: 'sgs.com', desc: 't("report.lab_global")', price: 'Med-High' }, { name: '&#x00DC;V Rheinland', site: 'tuv.com', desc: 'Strong in EU/CE', price: 'Med-High' }, { name: 'Intertek', site: 'intertek.com', desc: 'Wide coverage', price: 'Medium' }, { name: 'CTI', site: 'cti-group.com', desc: 'China-based, competitive', price: 'Low-Med' }, { name: 'Bureau Veritas', site: 'bureauveritas.com', desc: 'Food/contact specialist', price: 'Med-High' }, { name: 'Eurofins', site: 'eurofins.com', desc: 'Food/cosmetics', price: 'High' }].map((lab, idx) => (
                         <div key={idx} className="rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
                           <div className="flex items-center justify-between"><span className="font-medium text-white">{lab.name}</span><span className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-slate-400">{lab.price}</span></div>
                           <div className="text-xs text-slate-400 mt-0.5">{lab.desc}</div>
@@ -721,13 +721,13 @@ export function Report() {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Choose labs accredited by ILAC-MRA. Avoid instant-cert factories.</p>
+                    <p className="text-xs text-slate-500 mt-2">t("report.lab_advice")</p>
                   </div>
                   <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
-                    <h3 className="text-sm font-semibold text-blue-300 mb-3">Certificate Verification Methods</h3>
+                    <h3 className="text-sm font-semibold text-blue-300 mb-3">t("report.cert_verify")</h3>
                     <div className="space-y-2 text-sm text-slate-300">
                       <div className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">FCC ID:</span> Verify at <a href="https://www.fcc.gov/oet/ea" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">fcc.gov/oet/ea</a></div></div>
-                      <div className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">CE DoC:</span> Verify notified body, EU Rep, applicable directives.</div></div>
+                      <div className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">CE DoC:</span> t("report.ce_v")</div></div>
                       <div className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">CPC:</span> Verify CPSC-accepted lab at <a href="https://www.cpsc.gov/CPCTestingLabs" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">cpsc.gov</a></div></div>
                       <div className="flex items-start gap-2"><span className="text-blue-400 mt-0.5">&#x2022;</span><div><span className="font-medium text-white">PSE (Japan):</span> Verify at <a href="https://www.nite.go.jp/en/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">nite.go.jp/en/</a></div></div>
                     </div>
@@ -740,16 +740,16 @@ export function Report() {
         <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
           {isAiMode && aiResult && aiResult.warnings && aiResult.warnings.length > 0 && (
             <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 mb-4">
-              <h3 className="text-sm font-semibold text-red-300 mb-2">⚠ Key Warnings</h3>
+              <h3 className="text-sm font-semibold text-red-300 mb-2">⚠ t("report.key_warn")</h3>
               {aiResult.warnings.map((w, i) => (
                 <p key={i} className="text-sm text-red-200/80 mb-1">• {w}</p>
               ))}
             </div>
           )}
-          <h2 className="text-lg font-semibold mb-3">Action Items & Plan</h2>
+          <h2 className="text-lg font-semibold mb-3">t("report.action_plan")</h2>
           {displayRecommendations.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
-              <p className="text-slate-400">No action items available</p>
+              <p className="text-slate-400">t("report.no_actions")</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -769,9 +769,9 @@ export function Report() {
                     <div className="flex items-center gap-2 mb-3">
                       {icon}
                       <span className={`text-sm font-semibold ${titleColor}`}>
-                        {sev === "high" ? "🔴 High Priority — Immediate action required" : 
-                         sev === "medium" ? "🟡 Medium Priority — Handle soon" : 
-                         "🟢 Low Priority — Handle in order"}
+                        {sev === "high" ? "🔴 t("report.pri_high")" : 
+                         sev === "medium" ? "🟡 t("report.pri_med")" : 
+                         "🟢 t("report.optional")"}
                       </span>
                     </div>
                     <div className="space-y-3">
@@ -783,7 +783,7 @@ export function Report() {
                               <div className="flex flex-wrap items-center gap-2">
                                 <h3 className="font-semibold text-white">{item.name}</h3>
                                 {item.required && (
-                                  <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs text-red-300">Mandatory</span>
+                                  <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs text-red-300">t("report.mandatory")</span>
                                 )}
                               </div>
                               <p className="mt-1 text-sm text-slate-400">{item.action}</p>
@@ -825,7 +825,7 @@ export function Report() {
             <div>
               <h3 className="font-semibold text-blue-300">Disclaimer</h3>
               <p className="mt-1 text-sm text-slate-400">
-                This report and AI recommendations are for reference only and do not constitute legal advice. Compliance requirements may change at any time. Please refer to the latest information from regulatory authorities and Amazon official channels. We recommend consulting a professional compliance advisor for tailored advice.
+                t("report.disclaimer_full")
               </p>
             </div>
           </div>
@@ -852,7 +852,7 @@ function RecommendationCard({ item }: { item: RecommendationItem }) {
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-semibold text-white">{item.name}</h3>
-              {item.required && <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs text-red-300">Mandatory</span>}
+              {item.required && <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs text-red-300">t("report.mandatory")</span>}
               <span className={`rounded-md px-2 py-0.5 text-xs ${badgeColor}`}>{item.priorityLabel}</span>
             </div>
             <p className="mt-1 text-sm text-slate-400">{item.desc}</p>

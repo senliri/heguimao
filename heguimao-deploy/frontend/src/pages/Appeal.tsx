@@ -1,19 +1,19 @@
-import { useState, useEffect } from "react";
+import { t, useState, useEffect} from "react";
 import { Link } from "react-router-dom";
-import { FileText, Shield, AlertTriangle, CheckCircle, Upload, Mail, MessageSquare, Calendar, ChevronDown, Sparkles, Loader2, Copy, ScanEye, Zap, Brain, Eye } from "lucide-react";
+import { FileText, Shield, AlertTriangle, CheckCircle, Upload, Mail, MessageSquare, Calendar, ChevronDown, Sparkles, Loader2, t("appeal.copy"), ScanEye, Zap, Brain, Eye } from "lucide-react";
 import { analyzeComplianceNotice, reviewPOA, type NoticeAnalysisResult } from "../lib/appeal-analyzer";
 
 export function Appeal() {
   const [activeTab, setActiveTab] = useState<"analyzer" | "guide" | "archive">("analyzer");
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
-  const [productType, setProductType] = useState("");
-  const [reason, setReason] = useState("");
-  const [actions, setActions] = useState("");
-  const [language, setLanguage] = useState("en");
+  const [productType, sett("appeal.product")Type] = useState("");
+  const [reason, sett("appeal.reason")] = useState("");
+  const [actions, sett("appeal.action")s] = useState("");
+  const [language, sett("appeal.language")] = useState("en");
   const [isGenerating, setIsGenerating] = useState(false);
   const [appealResult, setAppealResult] = useState<{ rootCause?: string; poaTemplate?: string; correctiveActions?: string[]; preventiveMeasures?: string[] } | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [downloadFormat, setDownloadFormat] = useState("txt");
+  const [copied, sett("appeal.copied")] = useState(false);
+  const [downloadFormat, sett("appeal.download")Format] = useState("txt");
   const [history, setHistory] = useState<Array<{ id: number; product: string; reason: string; date: string; status: "draft" | "submitted" | "approved" | "rejected" }>>([]);
 
   // Persist history to localStorage
@@ -33,7 +33,7 @@ export function Appeal() {
     }
   }, [history]);
 
-  // Smart Appeal Analyzer state
+  // t("appeal.smart_analyzer") state
   const [reviewNotice, setReviewNotice] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<NoticeAnalysisResult | null>(null);
@@ -43,9 +43,9 @@ export function Appeal() {
   const handleGenerateAppeal = async () => {
     if (!productType || !reason) return;
     setIsGenerating(true);
-    setCopied(false);
+    sett("appeal.copied")(false);
     try {
-      const languageLabel: Record<string, string> = { en: "English", zh: "中文", ja: "日本語", de: "Deutsch" };
+      const languageLabel: Record<string, string> = { en: "English", zh: "中文", ja: "日本語", de: t("appeal.lang_de") };
       const workerUrl = import.meta.env.VITE_WORKER_URL || "https://heguimao-api.senliri028.workers.dev";
       const response = await fetch(`${workerUrl}/api/chat`, {
         method: "POST",
@@ -53,7 +53,7 @@ export function Appeal() {
         body: JSON.stringify({
           action: "appeal",
           prompt: `You are an Amazon appeal expert. Generate an appeal plan based on the user's listing removal reason.\n\nProduct: ${productType}\nRemoval reason: ${reason}\nActions taken: ${actions || "Not provided"}\nOutput language: ${languageLabel[language] || "English"}\n\nOutput format (strict JSON):\n{\n  "rootCause": "Root cause analysis",\n  "correctiveActions": ["Action 1", "Action 2"],\n  "preventiveMeasures": ["Measure 1", "Measure 2"],\n  "poaTemplate": "Complete appeal letter template",\n  "checklist": ["Document 1", "Document 2"],\n  "tips": "Appeal tips"\n}`,
-          message: "Please generate a complete appeal plan",
+          message: t("appeal.prompt_gen"),
         }),
       });
 
@@ -62,19 +62,19 @@ export function Appeal() {
       const reply = data.reply || data.content || "";
       const cleaned = reply.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
       const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("AI returned unexpected format");
+      if (!jsonMatch) throw new Error(t("appeal.unexpected_format"));
       setAppealResult(JSON.parse(jsonMatch[0]));
       setPreReviewResult(null);
       setHistory(prev => [{
-        id: Date.now(),
+        id: t("appeal.date").now(),
         product: productType,
         reason: reason,
-        date: new Date().toLocaleDateString("en-US"),
+        date: new t("appeal.date")().toLocalet("appeal.date")String("en-US"),
         status: "submitted" as const,
       }, ...prev]);
     } catch (err) {
-      console.error("Appeal generation failed:", err);
-      alert("Appeal generation failed. Please try again.");
+      console.error(t("appeal.gen_failed"), err);
+      alert(t("appeal.gen_retry"));
     } finally {
       setIsGenerating(false);
     }
@@ -87,8 +87,8 @@ export function Appeal() {
       const result = await analyzeComplianceNotice(reviewNotice, productType || undefined);
       setAnalysisResult(result);
     } catch (err) {
-      console.error("Analysis failed:", err);
-      alert("Analysis failed. Please try again.");
+      console.error(t("appeal.analysis_failed"), err);
+      alert(t("appeal.analysis_retry"));
     } finally {
       setAnalyzing(false);
     }
@@ -98,20 +98,20 @@ export function Appeal() {
     if (!appealResult) return;
     setPreReviewing(true);
     try {
-      const correctiveActions = (appealResult.correctiveActions as string[])?.join("\n") || ["Not provided"];
-      const preventiveMeasures = (appealResult.preventiveMeasures as string[])?.join("\n") || ["Not provided"];
+      const correctiveActions = (appealResult.correctiveActions as string[])?.join("\n") || [t("appeal.not_provided")];
+      const preventiveMeasures = (appealResult.preventiveMeasures as string[])?.join("\n") || [t("appeal.not_provided")];
       const result = await reviewPOA(
-        productType || "Unknown",
-        reason || "Unknown",
-        appealResult.rootCause || "Not provided",
+        productType || t("appeal.unknown"),
+        reason || t("appeal.unknown"),
+        appealResult.rootCause || t("appeal.not_provided"),
         Array.isArray(correctiveActions) ? correctiveActions : [correctiveActions],
         Array.isArray(preventiveMeasures) ? preventiveMeasures : [preventiveMeasures],
-        appealResult.poaTemplate || "Not provided"
+        appealResult.poaTemplate || t("appeal.not_provided")
       );
       setPreReviewResult(result);
     } catch (err) {
-      console.error("Pre-review failed:", err);
-      alert("Pre-review failed. Please try again.");
+      console.error(t("appeal.pre_review_failed"), err);
+      alert(t("appeal.pre_review_retry"));
     } finally {
       setPreReviewing(false);
     }
@@ -121,8 +121,8 @@ export function Appeal() {
     if (!appealResult?.poaTemplate) return;
     const text = typeof appealResult.poaTemplate === "string" ? appealResult.poaTemplate : String(appealResult.poaTemplate);
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    sett("appeal.copied")(true);
+    setTimeout(() => sett("appeal.copied")(false), 2000);
   };
 
   const downloadPOA = () => {
@@ -131,10 +131,10 @@ export function Appeal() {
     const rootCause = appealResult.rootCause ? `\n\nROOT CAUSE ANALYSIS:\n${appealResult.rootCause}\n\n` : "";
     const actionsList = appealResult.correctiveActions ? `\n\nCORRECTIVE ACTIONS:\n${(appealResult.correctiveActions as string[]).join("\n")}\n\n` : "";
     const preventive = appealResult.preventiveMeasures ? `\n\nPREVENTIVE MEASURES:\n${(appealResult.preventiveMeasures as string[]).join("\n")}\n\n` : "";
-    const fullText = `Plan of Action (POA)\nProduct: ${productType}\nRemoval Reason: ${reason}${rootCause}${actionsList}${preventive}${text}`;
+    const fullText = `Plan of t("appeal.action") (POA)\nt("appeal.product"): ${productType}\nt("appeal.removal_reason"): ${reason}${rootCause}${actionsList}${preventive}${text}`;
     
     if (downloadFormat === "html") {
-      const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>POA - ${productType}</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.6;}h1{color:#1e40af;}h2{color:#7c3aed;border-bottom:1px solid #e5e7eb;padding-bottom:8px;}p{margin:8px 0;}</style></head><body><h1>Plan of Action for ${productType}</h1><p><strong>Removal Reason:</strong> ${reason}</p><h2>Root Cause</h2>${rootCause}<h2>Corrective Actions</h2>${actionsList}<h2>Preventive Measures</h2>${preventive}${text}</body></html>`;
+      const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>POA - ${productType}</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.6;}h1{color:#1e40af;}h2{color:#7c3aed;border-bottom:1px solid #e5e7eb;padding-bottom:8px;}p{margin:8px 0;}</style></head><body><h1>Plan of t("appeal.action") for ${productType}</h1><p><strong>t("appeal.removal_reason"):</strong> ${reason}</p><h2>t("appeal.root_cause")</h2>${rootCause}<h2>t("appeal.corrective_actions")</h2>${actionsList}<h2>t("appeal.preventive_measures")</h2>${preventive}${text}</body></html>`;
       const blob = new Blob([htmlContent], { type: "text/html" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -201,21 +201,21 @@ export function Appeal() {
             className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition ${activeTab === "analyzer" ? "bg-cyan-600 text-white" : "border border-white/10 text-slate-400 hover:text-white"}`}
           >
             <Zap className="h-4 w-4" />
-            Smart Analyzer
+            t("appeal.tab_analyzer")
           </button>
           <button
             onClick={() => handleTabChange("guide")}
             className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition ${activeTab === "guide" ? "bg-purple-600 text-white" : "border border-white/10 text-slate-400 hover:text-white"}`}
           >
             <Shield className="h-4 w-4" />
-            Appeal Guide
+            t("appeal.tab_guide")
           </button>
           <button
             onClick={() => handleTabChange("archive")}
             className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium transition ${activeTab === "archive" ? "bg-blue-600 text-white" : "border border-white/10 text-slate-400 hover:text-white"}`}
           >
             <FileText className="h-4 w-4" />
-            Archive
+            t("appeal.tab_archive")
           </button>
         </div>
       </section>
@@ -224,22 +224,22 @@ export function Appeal() {
       {activeTab === "analyzer" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
           <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-purple-500/5 p-6">
-            <h1 className="text-2xl font-bold text-cyan-300">⚡ Smart Appeal Analyzer</h1>
-            <p className="mt-1 text-sm text-slate-400">Paste your Amazon compliance notice — AI identifies the issue, analyzes severity, and auto-generates a targeted appeal letter.</p>
+            <h1 className="text-2xl font-bold text-cyan-300">⚡ t("appeal.smart_analyzer")</h1>
+            <p className="mt-1 text-sm text-slate-400">t("appeal.smart_analyzer_desc")</p>
 
             {/* Steps */}
             <div className="mt-4 grid grid-cols-3 gap-3">
               <div className="rounded-lg bg-cyan-500/10 px-3 py-2">
                 <div className="text-xs font-bold text-cyan-300">1</div>
-                <div className="text-xs text-slate-300">Paste notice</div>
+                <div className="text-xs text-slate-300">t("appeal.step1")</div>
               </div>
               <div className="rounded-lg bg-cyan-500/10 px-3 py-2">
                 <div className="text-xs font-bold text-cyan-300">2</div>
-                <div className="text-xs text-slate-300">AI analyzes issue</div>
+                <div className="text-xs text-slate-300">t("appeal.step2")</div>
               </div>
               <div className="rounded-lg bg-cyan-500/10 px-3 py-2">
                 <div className="text-xs font-bold text-cyan-300">3</div>
-                <div className="text-xs text-slate-300">Fill form & generate POA</div>
+                <div className="text-xs text-slate-300">t("appeal.step3")</div>
               </div>
             </div>
 
@@ -261,7 +261,7 @@ export function Appeal() {
                   <Loader2 className={`h-4 w-4 ${analyzing ? 'animate-spin' : 'opacity-0'}`} />
                   <ScanEye className={`h-4 w-4 absolute inset-0 ${analyzing ? 'opacity-0' : 'opacity-100'}`} />
                 </span>
-                {analyzing ? "Analyzing..." : "Analyze Review Notice"}
+                {analyzing ? t("appeal.analyzing") : t("appeal.analyze_notice")}
               </button>
 
               {/* Analysis Result */}
@@ -269,39 +269,39 @@ export function Appeal() {
                 <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-4 space-y-4">
                   <div className="flex gap-3 flex-wrap">
                     <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-xs text-slate-400">Compliance Area</div>
+                      <div className="text-xs text-slate-400">t("appeal.comp_area")</div>
                       <div className="text-sm font-bold text-white">{analysisResult.complianceDimension || "—"}</div>
                     </div>
                     <div className="rounded-lg px-3 py-2">
-                      <div className="text-xs text-slate-400">Severity</div>
+                      <div className="text-xs text-slate-400">t("appeal.severity")</div>
                       <span className={`text-sm font-bold ${severityColor(analysisResult.severity || "")}`}>
                         {analysisResult.severity?.toUpperCase() || "—"}
                       </span>
                     </div>
                     <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-xs text-slate-400">Reviewer</div>
+                      <div className="text-xs text-slate-400">t("appeal.reviewer")</div>
                       <div className="text-sm font-bold text-white">{analysisResult.reviewerType || "—"}</div>
                     </div>
                     <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-xs text-slate-400">Confidence</div>
+                      <div className="text-xs text-slate-400">t("appeal.confidence")</div>
                       <div className="text-sm font-bold text-white">{analysisResult.confidence || "—"}</div>
                     </div>
                   </div>
                   {analysisResult.specificIssue && (
                     <div>
-                      <div className="text-xs font-semibold text-cyan-300 mb-1">🎯 Specific Issue</div>
+                      <div className="text-xs font-semibold text-cyan-300 mb-1">🎯 t("appeal.specific_issue")</div>
                       <div className="text-sm text-slate-300">{analysisResult.specificIssue}</div>
                     </div>
                   )}
                   {analysisResult.amazonPerspective && (
                     <div>
-                      <div className="text-xs font-semibold text-blue-300 mb-1">🤖 Amazon's View</div>
+                      <div className="text-xs font-semibold text-blue-300 mb-1">🤖 t("appeal.amazon_view")</div>
                       <div className="text-sm text-slate-300">{analysisResult.amazonPerspective}</div>
                     </div>
                   )}
                   {analysisResult.requestedEvidence && (analysisResult.requestedEvidence as string[]).length > 0 && (
                     <div>
-                      <div className="text-xs font-semibold text-yellow-300 mb-1">📋 Requested Evidence</div>
+                      <div className="text-xs font-semibold text-yellow-300 mb-1">📋 t("appeal.requested_evidence")</div>
                       <ul className="space-y-1">
                         {(analysisResult.requestedEvidence as string[]).map((e, i) => (
                           <li key={i} className="text-xs text-slate-300">• {e}</li>
@@ -309,15 +309,15 @@ export function Appeal() {
                       </ul>
                     </div>
                   )}
-                  {analysisResult.recommendedStrategy && (
+                  {analysisResult.recommendedt("appeal.strategy") && (
                     <div>
-                      <div className="text-xs font-semibold text-green-300 mb-1">💡 Strategy</div>
-                      <div className="text-sm text-slate-300">{analysisResult.recommendedStrategy}</div>
+                      <div className="text-xs font-semibold text-green-300 mb-1">💡 t("appeal.strategy")</div>
+                      <div className="text-sm text-slate-300">{analysisResult.recommendedt("appeal.strategy")}</div>
                     </div>
                   )}
                   {analysisResult.followUpQuestions && (analysisResult.followUpQuestions as string[]).length > 0 && (
                     <div>
-                      <div className="text-xs font-semibold text-purple-300 mb-1">❓ Info Needed for POA</div>
+                      <div className="text-xs font-semibold text-purple-300 mb-1">❓ t("appeal.info_needed")</div>
                       <ul className="space-y-1">
                         {(analysisResult.followUpQuestions as string[]).map((q, i) => (
                           <li key={i} className="text-xs text-slate-300">• {q}</li>
@@ -327,7 +327,7 @@ export function Appeal() {
                   )}
                   {analysisResult.similarPastCases && (analysisResult.similarPastCases as string[]).length > 0 && (
                     <div>
-                      <div className="text-xs font-semibold text-amber-300 mb-1">📚 Similar Cases</div>
+                      <div className="text-xs font-semibold text-amber-300 mb-1">📚 t("appeal.similar_cases")</div>
                       <ul className="space-y-1">
                         {(analysisResult.similarPastCases as string[]).map((c, i) => (
                           <li key={i} className="text-xs text-slate-300">• {c}</li>
@@ -338,76 +338,76 @@ export function Appeal() {
                   <div className="pt-2 border-t border-white/10">
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle className="h-3 w-3 text-green-400" />
-                      <span className="text-xs font-semibold text-green-300">Analysis Complete</span>
+                      <span className="text-xs font-semibold text-green-300">t("appeal.analysis_complete")</span>
                     </div>
-                    <p className="text-xs text-slate-400">Fill in product details below to generate a targeted appeal letter.</p>
+                    <p className="text-xs text-slate-400">t("appeal.fill_details")</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Product Form + POA Generator */}
+            {/* t("appeal.product") Form + POA Generator */}
             <div className="mt-6 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-blue-500/5 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-5 w-5 text-purple-400" />
-                <h2 className="text-lg font-semibold text-purple-300">AI Appeal Letter Generator</h2>
+                <h2 className="text-lg font-semibold text-purple-300">t("appeal.poa_gen")</h2>
                 {analysisResult && (
                   <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <CheckCircle className="h-3 w-3" />
-                    Smart analysis applied
+                    t("appeal.smart_applied")
                   </span>
                 )}
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm text-slate-300 mb-1 block">Product Type</label>
+                  <label className="text-sm text-slate-300 mb-1 block">t("appeal.product_type")</label>
                   <input
                     type="text"
-                    placeholder="e.g. Bluetooth speakers, children plush toys"
+                    placeholder=t("appeal.placeholder_product")
                     value={productType}
-                    onChange={(e) => setProductType(e.target.value)}
+                    onChange={(e) => sett("appeal.product")Type(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white placeholder-slate-500 outline-none focus:border-purple-500/50"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-300 mb-1 block">Removal Reason</label>
+                  <label className="text-sm text-slate-300 mb-1 block">t("appeal.removal_reason")</label>
                   <select
                     value={reason}
-                    onChange={(e) => setReason(e.target.value)}
+                    onChange={(e) => sett("appeal.reason")(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50"
                   >
-                    <option value="">Select a removal reason</option>
-                    <option value="Product safety complaint">Product safety complaint</option>
-                    <option value="Missing compliance documents">Missing compliance documents</option>
-                    <option value="Non-compliant product labeling">Non-compliant product labeling</option>
-                    <option value="Restricted product violation">Restricted product violation</option>
-                    <option value="Intellectual property complaint">Intellectual property complaint</option>
-                    <option value="Misclassified / wrong category">Misclassified / wrong category</option>
+                    <option value="">t("appeal.select_reason")</option>
+                    <option value=t("appeal.reason_safety")>t("appeal.reason_safety")</option>
+                    <option value=t("appeal.reason_missing_docs")>t("appeal.reason_missing_docs")</option>
+                    <option value=t("appeal.reason_labeling")>t("appeal.reason_labeling")</option>
+                    <option value=t("appeal.reason_restricted")>t("appeal.reason_restricted")</option>
+                    <option value=t("appeal.reason_ip")>t("appeal.reason_ip")</option>
+                    <option value=t("appeal.reason_miscat")>t("appeal.reason_miscat")</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm text-slate-300 mb-1 block">Actions Taken (Optional)</label>
+                  <label className="text-sm text-slate-300 mb-1 block">t("appeal.actions_taken")</label>
                   <textarea
                     rows={2}
-                    placeholder="e.g. Contacted supplier for latest test report, updated labels"
+                    placeholder=t("appeal.placeholder_actions")
                     value={actions}
-                    onChange={(e) => setActions(e.target.value)}
+                    onChange={(e) => sett("appeal.action")s(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white placeholder-slate-500 outline-none focus:border-purple-500/50 resize-none"
                   />
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <label className="text-sm text-slate-300 mb-1 block">Language</label>
-                    <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
+                    <label className="text-sm text-slate-300 mb-1 block">t("appeal.language")</label>
+                    <select value={language} onChange={(e) => sett("appeal.language")(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
                       <option value="en">🇺🇸 English</option>
-                      <option value="zh">🇨🇳 Chinese</option>
-                      <option value="ja">🇯🇵 Japanese</option>
-                      <option value="de">🇩🇪 Deutsch</option>
+                      <option value="zh">🇨🇳 t("appeal.lang_zh")</option>
+                      <option value="ja">🇯🇵 t("appeal.lang_ja")</option>
+                      <option value="de">🇩🇪 t("appeal.lang_de")</option>
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="text-sm text-slate-300 mb-1 block">Download</label>
-                    <select value={downloadFormat} onChange={(e) => setDownloadFormat(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
+                    <label className="text-sm text-slate-300 mb-1 block">t("appeal.download")</label>
+                    <select value={downloadFormat} onChange={(e) => sett("appeal.download")Format(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
                       <option value="txt">.txt</option>
                       <option value="html">.html</option>
                     </select>
@@ -423,7 +423,7 @@ export function Appeal() {
                       <Loader2 className={`h-4 w-4 ${isGenerating ? 'animate-spin' : 'opacity-0'}`} />
                       <Sparkles className={`h-4 w-4 absolute inset-0 ${isGenerating ? 'opacity-0' : 'opacity-100'}`} />
                     </span>
-                    {isGenerating ? "Generating..." : "Generate Appeal Letter"}
+                    {isGenerating ? t("appeal.generating") : t("appeal.gen_letter")}
                   </button>
                 </div>
               </div>
@@ -432,28 +432,28 @@ export function Appeal() {
               {appealResult && (
                 <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-purple-300">Appeal Plan</span>
+                    <span className="text-sm font-semibold text-purple-300">t("appeal.appeal_plan")</span>
                     <div className="flex items-center gap-2">
                       <button onClick={downloadPOA} className="flex items-center gap-1 text-xs text-blue-400 hover:text-white transition">
-                        <Upload className="h-3 w-3" /> Download
+                        <Upload className="h-3 w-3" /> t("appeal.download")
                       </button>
                       <button onClick={copyPOA} className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition">
-                        <Copy className="h-3 w-3" /> {copied ? "Copied" : "Copy"}
+                        <t("appeal.copy") className="h-3 w-3" /> {copied ? t("appeal.copied") : t("appeal.copy")}
                       </button>
                     </div>
                   </div>
-                  {/* Pre-submission Review */}
+                  {/* t("appeal.pre_review") */}
                   <div className="mb-3 rounded-lg bg-white/5 p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-xs font-semibold text-amber-300">🔍 Pre-submission Review</h4>
+                      <h4 className="text-xs font-semibold text-amber-300">🔍 t("appeal.pre_review")</h4>
                       <button onClick={handlePreReview} disabled={preReviewing} className="text-xs bg-amber-600/30 text-amber-300 hover:bg-amber-600/50 px-2 py-1 rounded transition disabled:opacity-50 flex items-center gap-1">
                         <span className="relative inline-flex h-3 w-3 items-center justify-center align-middle">
                           <Loader2 className={`h-3 w-3 ${preReviewing ? 'animate-spin' : 'opacity-0'}`} />
                           <Shield className={`h-3 w-3 absolute inset-0 ${preReviewing ? 'opacity-0' : 'opacity-100'}`} />
                         </span>
-                        {preReviewing ? "Reviewing..." : "Review POA"}
+                        {preReviewing ? t("appeal.reviewing") : t("appeal.review_poa")}
                       </button>
-                      <span className="text-[10px] text-amber-500/70">Beta</span>
+                      <span className="text-[10px] text-amber-500/70">t("appeal.beta")</span>
                     </div>
                     {preReviewResult && (
                       <div className="space-y-3 text-sm">
@@ -464,40 +464,40 @@ export function Appeal() {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">Root Cause</div>
+                            <div className="text-xs text-slate-400">t("appeal.root_cause")</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.rootCauseQuality?.score || 0}/100</div>
                             {preReviewResult.rootCauseQuality?.weakness && (
                               <div className="text-xs text-slate-500">{preReviewResult.rootCauseQuality.weakness}</div>
                             )}
                           </div>
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">Corrective Actions</div>
+                            <div className="text-xs text-slate-400">t("appeal.corrective_actions")</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.correctiveActionsQuality?.score || 0}/100</div>
                             {preReviewResult.correctiveActionsQuality?.weakness && (
                               <div className="text-xs text-slate-500">{preReviewResult.correctiveActionsQuality.weakness}</div>
                             )}
                           </div>
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">Preventive Measures</div>
+                            <div className="text-xs text-slate-400">t("appeal.preventive_measures")</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.preventiveMeasuresQuality?.score || 0}/100</div>
                             {preReviewResult.preventiveMeasuresQuality?.weakness && (
                               <div className="text-xs text-slate-500">{preReviewResult.preventiveMeasuresQuality.weakness}</div>
                             )}
                           </div>
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">Tone & Structure</div>
+                            <div className="text-xs text-slate-400">t("appeal.tone_structure")</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.toneAndStructure?.score || 0}/100</div>
                           </div>
                         </div>
-                        {preReviewResult.mostLikelyRejectionReason && (
+                        {preReviewResult.mostLikelyRejectiont("appeal.reason") && (
                           <div className="rounded bg-red-500/10 p-2">
-                            <div className="text-xs text-red-300 mb-1">⚠ Most Likely Rejection Reason</div>
-                            <div className="text-xs text-slate-300">{preReviewResult.mostLikelyRejectionReason}</div>
+                            <div className="text-xs text-red-300 mb-1">⚠ t("appeal.most_likely_rejection")</div>
+                            <div className="text-xs text-slate-300">{preReviewResult.mostLikelyRejectiont("appeal.reason")}</div>
                           </div>
                         )}
                         {preReviewResult.redFlags && (preReviewResult.redFlags as string[]).length > 0 && (
                           <div>
-                            <div className="text-xs text-red-300 mb-1">🚩 Red Flags</div>
+                            <div className="text-xs text-red-300 mb-1">🚩 t("appeal.red_flags")</div>
                             {(preReviewResult.redFlags as string[]).map((f: string, i: number) => (
                               <div key={i} className="text-xs text-slate-300">• {f}</div>
                             ))}
@@ -505,16 +505,16 @@ export function Appeal() {
                         )}
                         {preReviewResult.topWeaknesses && (preReviewResult.topWeaknesses as string[]).length > 0 && (
                           <div>
-                            <div className="text-xs text-orange-300 mb-1">🔧 Top Weaknesses</div>
+                            <div className="text-xs text-orange-300 mb-1">🔧 t("appeal.top_weaknesses")</div>
                             {(preReviewResult.topWeaknesses as string[]).map((w: string, i: number) => (
                               <div key={i} className="text-xs text-slate-300">• {w}</div>
                             ))}
                           </div>
                         )}
-                        {preReviewResult.suggestedImprovements && (preReviewResult.suggestedImprovements as string[]).length > 0 && (
+                        {preReviewResult.suggestedt("appeal.improvements") && (preReviewResult.suggestedt("appeal.improvements") as string[]).length > 0 && (
                           <div>
-                            <div className="text-xs text-green-300 mb-1">💡 Improvements</div>
-                            {(preReviewResult.suggestedImprovements as string[]).map((s: string, i: number) => (
+                            <div className="text-xs text-green-300 mb-1">💡 t("appeal.improvements")</div>
+                            {(preReviewResult.suggestedt("appeal.improvements") as string[]).map((s: string, i: number) => (
                               <div key={i} className="text-xs text-slate-300">• {s}</div>
                             ))}
                           </div>
@@ -524,13 +524,13 @@ export function Appeal() {
                   </div>
                   {appealResult?.rootCause && (
                     <div className="mb-3">
-                      <h4 className="text-xs font-semibold text-slate-300 mb-1">📋 Root Cause</h4>
+                      <h4 className="text-xs font-semibold text-slate-300 mb-1">📋 t("appeal.root_cause")</h4>
                       <p className="text-sm text-slate-300">{appealResult.rootCause}</p>
                     </div>
                   )}
                   {appealResult?.poaTemplate && (
                     <div className="mb-3 rounded-lg bg-white/5 p-3">
-                      <h4 className="text-xs font-semibold text-blue-300 mb-2">📝 Appeal Letter</h4>
+                      <h4 className="text-xs font-semibold text-blue-300 mb-2">📝 t("appeal.letter")</h4>
                       <div className="text-sm text-slate-200 whitespace-pre-wrap max-h-64 overflow-y-auto">
                         {appealResult.poaTemplate}
                       </div>
@@ -538,7 +538,7 @@ export function Appeal() {
                   )}
                   {appealResult.correctiveActions && (appealResult.correctiveActions as string[]).length > 0 && (
                     <div className="mb-2">
-                      <h4 className="text-xs font-semibold text-green-300 mb-1">✅ Corrective Actions</h4>
+                      <h4 className="text-xs font-semibold text-green-300 mb-1">✅ t("appeal.corrective_actions")</h4>
                       {(appealResult.correctiveActions as string[]).map((a, i) => (
                         <p key={i} className="text-xs text-slate-300 mb-1">• {String(a)}</p>
                       ))}
@@ -546,7 +546,7 @@ export function Appeal() {
                   )}
                   {appealResult.preventiveMeasures && (
                     <div className="mb-2">
-                      <h4 className="text-xs font-semibold text-amber-300 mb-1">🛡️ Preventive Measures</h4>
+                      <h4 className="text-xs font-semibold text-amber-300 mb-1">🛡️ t("appeal.preventive_measures")</h4>
                       {appealResult.preventiveMeasures!.map((p, i) => (
                         <p key={i} className="text-xs text-slate-300 mb-1">• {p}</p>
                       ))}
@@ -563,20 +563,20 @@ export function Appeal() {
       {activeTab === "guide" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            <h1 className="text-2xl font-bold">Amazon Appeal Guide</h1>
-            <p className="mt-1 text-sm text-slate-400">Product delisted or received a compliance warning? Follow these steps to prepare your appeal materials.</p>
+            <h1 className="text-2xl font-bold">Amazon t("appeal.tab_guide")</h1>
+            <p className="mt-1 text-sm text-slate-400">t("appeal.guide_desc")</p>
 
-            {/* Common Removal Reasons */}
+            {/* Common t("appeal.removal_reason")s */}
             <div className="mt-6">
-              <h2 className="text-lg font-semibold">Common Removal Reasons</h2>
+              <h2 className="text-lg font-semibold">Common t("appeal.removal_reason")s</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {[
-                  { title: "Product Safety Complaint", desc: "Customer complaint about product safety, Amazon requires compliance proof" },
-                  { title: "Missing Compliance Documents", desc: "Missing mandatory certification documents like FDA/CE/FCC" },
-                  { title: "Non-Compliant Product Labeling", desc: "Missing warning labels, ingredient lists, or compliance marks" },
-                  { title: "Restricted Product Violation", desc: "Product categorized as restricted but without submitted credentials" },
-                  { title: "Intellectual Property Complaint", desc: "Patent, trademark, or copyright infringement complaint" },
-                  { title: "Misclassified / Wrong Category", desc: "Product wrongly placed in a category requiring additional certification" },
+                  { title: t("appeal.reason_product_safety"), desc: t("appeal.desc_product_safety") },
+                  { title: t("appeal.reason_missing_comp"), desc: t("appeal.desc_missing_comp") },
+                  { title: t("appeal.reason_labeling"), desc: t("appeal.desc_labeling") },
+                  { title: t("appeal.reason_restricted"), desc: t("appeal.desc_restricted") },
+                  { title: t("appeal.reason_ip"), desc: t("appeal.desc_ip") },
+                  { title: t("appeal.reason_miscat"), desc: t("appeal.desc_miscat") },
                 ].map((reason, i) => (
                   <div key={i} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
                     <div className="flex items-center gap-2">
@@ -589,16 +589,16 @@ export function Appeal() {
               </div>
             </div>
 
-            {/* Appeal Steps */}
+            {/* t("appeal.steps") */}
             <div className="mt-8">
-              <h2 className="text-lg font-semibold">Appeal Steps</h2>
+              <h2 className="text-lg font-semibold">t("appeal.steps")</h2>
               <div className="mt-4 space-y-3">
                 {[
-                  { step: 1, title: "Identify Removal Reason", desc: "Log into Amazon Seller Central, check Performance Notifications for the specific removal reason." },
-                  { step: 2, title: "Gather Compliance Documents", desc: "Prepare test reports, certification certificates, product images, supplier invoices, etc." },
-                  { step: 3, title: "Develop Corrective Action Plan", desc: "Describe corrective measures already taken: updated labels, switched suppliers, improved production process." },
-                  { step: 4, title: "Write Appeal Letter", desc: "Format: include Plan of Action (POA), root cause analysis, corrective actions, and preventive measures." },
-                  { step: 5, title: "Submit Appeal", desc: "Submit through Seller Central appeal channel. Ensure all files are PDF format and clearly readable." },
+                  { step: 1, title: t("appeal.step_identify_title"), desc: t("appeal.desc_identify") },
+                  { step: 2, title: t("appeal.step_gather"), desc: t("appeal.desc_gather") },
+                  { step: 3, title: t("appeal.step_develop"), desc: t("appeal.desc_develop") },
+                  { step: 4, title: t("appeal.step_write_title"), desc: t("appeal.desc_write") },
+                  { step: 5, title: t("appeal.step_submit"), desc: t("appeal.desc_submit") },
                 ].map((s) => (
                   <div key={s.step} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-blue-500/30">
                     <div className="flex items-start gap-4">
@@ -615,13 +615,13 @@ export function Appeal() {
 
             {/* FAQ */}
             <div className="mt-8">
-              <h2 className="text-lg font-semibold">Appeal FAQ</h2>
+              <h2 className="text-lg font-semibold">t("appeal.faq")</h2>
               <div className="mt-4 space-y-2">
                 {[
-                  { q: "What if the appeal is rejected?", a: "First rejection is common. Read Amazon's rejection reason carefully, supplement materials, and resubmit. You can usually appeal up to 3 times." },
-                  { q: "How long does an appeal take?", a: "Usually 1-2 weeks for a response; complex cases may take 2-4 weeks. Do not repeatedly submit appeals within 24 hours." },
-                  { q: "Must the appeal letter be in English?", a: "Yes, recommended for US/EU markets. For Japan, you can attach a Japanese translation." },
-                  { q: "Do I need a lawyer?", a: "General compliance issues can be handled yourself. For legal disputes or intellectual property conflicts, consult a professional attorney." },
+                  { q: t("appeal.faq_rejected_q"), a: t("appeal.faq_rejected_a") },
+                  { q: t("appeal.faq_time_q"), a: t("appeal.faq_time_a") },
+                  { q: t("appeal.faq_lang_q"), a: t("appeal.faq_lang_a") },
+                  { q: t("appeal.faq_lawyer_q"), a: t("appeal.faq_lawyer_a") },
                 ].map((faq, i) => (
                   <div key={i} className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
                     <button
@@ -648,21 +648,21 @@ export function Appeal() {
       {activeTab === "archive" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 pb-16 sm:px-6">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            <h1 className="text-2xl font-bold">Compliance Archive</h1>
-            <p className="mt-1 text-sm text-slate-400">Manage your product compliance records and historical check reports</p>
+            <h1 className="text-2xl font-bold">Compliance t("appeal.tab_archive")</h1>
+            <p className="mt-1 text-sm text-slate-400">t("appeal.archive_desc")</p>
 
             {history.length > 0 && (
               <div className="mt-6">
-                <h2 className="text-lg font-semibold mb-3">Appeal History</h2>
+                <h2 className="text-lg font-semibold mb-3">t("appeal.history")</h2>
                 <div className="overflow-x-auto rounded-xl border border-white/10">
                   <table className="w-full text-sm">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Product</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Reason</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">Status</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">Action</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.date")</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.product")</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.reason")</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.status")</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">t("appeal.action")</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -678,14 +678,14 @@ export function Appeal() {
                               item.status === "approved" ? "bg-green-500/10 text-green-400" :
                               "bg-red-500/10 text-red-400"
                             }`}>
-                              {item.status === "draft" ? "📝 Draft" :
-                               item.status === "submitted" ? "📤 Submitted" :
-                               item.status === "approved" ? "✅ Approved" :
-                               "❌ Rejected"}
+                              {item.status === "draft" ? "📝 t("appeal.draft")" :
+                               item.status === "submitted" ? "📤 t("appeal.submitted")" :
+                               item.status === "approved" ? "✅ t("appeal.approved")" :
+                               "❌ t("appeal.rejected")"}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button onClick={() => deleteHistory(item.id)} className="text-xs text-slate-500 hover:text-red-400 transition">Delete</button>
+                            <button onClick={() => deleteHistory(item.id)} className="text-xs text-slate-500 hover:text-red-400 transition">t("appeal.delete")</button>
                           </td>
                         </tr>
                       ))}
@@ -698,11 +698,11 @@ export function Appeal() {
             {history.length === 0 && (
               <div className="mt-8 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
                 <FileText className="mx-auto h-12 w-12 text-slate-500" />
-                <h3 className="mt-4 text-lg font-medium text-slate-300">No Appeal Records Yet</h3>
-                <p className="mt-2 text-sm text-slate-500">Appeal plans will be saved here automatically after generation</p>
+                <h3 className="mt-4 text-lg font-medium text-slate-300">t("appeal.no_records")</h3>
+                <p className="mt-2 text-sm text-slate-500">t("appeal.records_saved")</p>
                 <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">
                   <CheckCircle className="h-4 w-4" />
-                  Start a New Compliance Check
+                  t("appeal.start_new")
                 </Link>
               </div>
             )}
@@ -711,10 +711,10 @@ export function Appeal() {
             {history.length === 0 && (
               <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { icon: Upload, title: "Upload Documents", desc: "Upload test reports and certification certificates" },
-                  { icon: Mail, title: "Historical Notifications", desc: "Save Amazon performance notifications and warnings" },
-                  { icon: MessageSquare, title: "Appeal Progress", desc: "Track appeal status and Amazon responses" },
-                  { icon: Calendar, title: "Expiry Reminders", desc: "Set certification expiry reminders" },
+                  { icon: Upload, title: t("appeal.upload_docs"), desc: t("appeal.upload_desc") },
+                  { icon: Mail, title: t("appeal.notifications"), desc: t("appeal.notif_desc") },
+                  { icon: MessageSquare, title: t("appeal.progress"), desc: t("appeal.progress_desc") },
+                  { icon: Calendar, title: t("appeal.reminders"), desc: t("appeal.reminder_desc") },
                 ].map((item, i) => {
                   const Icon = item.icon;
                   return (
