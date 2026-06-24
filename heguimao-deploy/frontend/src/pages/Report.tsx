@@ -15,7 +15,8 @@ import {
 import { inferProductProfile, generateRecommendations, type RecommendationItem } from "../lib/recommend";
 import { generateDiagnosis, isProfileComplete, type ProductProfile, type ProductProfile as AgentProfile } from "../lib/agent";
 import type { DiagnosisResult } from "../lib/agent";
-import { t, store } from "../lib/store";
+import { store } from "../lib/store";
+import { t } from "../lib/i18n";
 
 // ============================================
 // Hybrid merge: AI reasoning + structured data fields
@@ -24,7 +25,7 @@ function mergeAiWithStructuredData(
   aiResult: DiagnosisResult,
   rawCompliance: ComplianceItem[],
   marketId: string,
-  profile: Returnt("report.cert_type")<typeof inferProductProfile>,
+  profile: ReturnType<typeof inferProductProfile>,
   catId: string
 ): RecommendationItem[] {
   // Build a lookup of AI recommendations by certification name (case-insensitive)
@@ -186,7 +187,7 @@ export function Report() {
         });
         // Save to history
         store.saveReport({
-          productt("report.cert_type"): aiProduct,
+          product: aiProduct,
           market: marketId,
           profile: { ...(useProfile as Record<string, unknown>) },
           diagnosis: { ...aiResultData },
@@ -769,9 +770,9 @@ export function Report() {
                     <div className="flex items-center gap-2 mb-3">
                       {icon}
                       <span className={`text-sm font-semibold ${titleColor}`}>
-                        {sev === "high" ? "🔴 t("report.pri_high")" : 
-                         sev === "medium" ? "🟡 t("report.pri_med")" : 
-                         "🟢 t("report.optional")"}
+                        {sev === "high" ? `\u{1F534} ${t("report.pri_high")}` : 
+                         sev === "medium" ? `\u{1F7E1} ${t("report.pri_med")}` : 
+                         `\u{1F7E2} ${t("report.optional")}`}
                       </span>
                     </div>
                     <div className="space-y-3">

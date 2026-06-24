@@ -2,7 +2,7 @@ import { t, useState} from "react";
 import { useAuth } from "../components/AuthGate";
 import { logoutUser, getCurrentUser, getUsers, saveUsers, verifyPassword, enhancedHash } from "../lib/auth";
 import { User, Mail, Calendar, Clock, Shield, LogOut, Key, Edit2, Crown, Zap, Star } from "lucide-react";
-import { gett("profile.subscription"), PLAN_CONFIG, type PlanType } from "../lib/subscription";
+import { getSubscription, PLAN_CONFIG, type PlanType } from "../lib/subscription";
 
 export function Profile() {
   const { user, logout } = useAuth();
@@ -129,7 +129,7 @@ export function Profile() {
             </div>
             <div>
               <div className="text-sm text-slate-400">t("profile.current_plan")</div>
-              <div className="text-white font-medium capitalize">{gett("profile.subscription")().plan}</div>
+              <div className="text-white font-medium capitalize">{getSubscription().plan}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -138,7 +138,7 @@ export function Profile() {
             </div>
             <div>
               <div className="text-sm text-slate-400">t("profile.api_used")</div>
-              <div className="text-white font-medium">{gett("profile.subscription")().apiCallsUsed} / {gett("profile.subscription")().apiCallsLimit}</div>
+              <div className="text-white font-medium">{getSubscription().apiCallsUsed} / {getSubscription().apiCallsLimit}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export function Profile() {
             </div>
             <div>
               <div className="text-sm text-slate-400">t("profile.reports_generated")</div>
-              <div className="text-white font-medium">{gett("profile.subscription")().reportsGenerated} / {gett("profile.subscription")().maxt("profile.reports")}</div>
+              <div className="text-white font-medium">{getSubscription().reportsGenerated} / {getSubscription().maxReports}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -156,7 +156,7 @@ export function Profile() {
             </div>
             <div>
               <div className="text-sm text-slate-400">t("profile.expires")</div>
-              <div className="text-white font-medium">{gett("profile.subscription")().expiresAt ? new Date(gett("profile.subscription")().expiresAt).toLocaleDateString() : 't("profile.never")'}</div>
+              <div className="text-white font-medium">{gett("profile.subscription")().expiresAt ? new Date(getSubscription().expiresAt).toLocaleDateString() : t("profile.never")}</div>
             </div>
           </div>
         </div>
@@ -183,21 +183,21 @@ export function Profile() {
             )}
             <input
               type="password"
-              placeholder=t("profile.current_pw")
+              placeholder={t("profile.current_pw")}
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
             />
             <input
               type="password"
-              placeholder=t("profile.new_pw")
+              placeholder={t("profile.new_pw")}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
             />
             <input
               type="password"
-              placeholder=t("profile.confirm_pw")
+              placeholder={t("profile.confirm_pw")}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"

@@ -1,7 +1,7 @@
 import { t, useState, useEffect} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle, User as UserIcon, ArrowLeft } from "lucide-react";
-import { registerUser, loginUser, requestt("auth.password")Reset, verifyResetToken, resett("auth.password"), type User, getSession } from "../lib/auth";
+import { registerUser, loginUser, requestPasswordReset, verifyResetToken, resetPassword, type User, getSession } from "../lib/auth";
 
 type Mode = "login" | "register" | "reset-request" | "reset-password";
 
@@ -9,9 +9,9 @@ export function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [password, sett("auth.password")] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [showt("auth.password"), setShowt("auth.password")] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -59,7 +59,7 @@ export function AuthPage() {
           result = await loginUser(email, password);
         }
       } else if (mode === "reset-request") {
-        result = await requestt("auth.password")Reset(email);
+        result = await requestPasswordReset(email);
         if (result.success) {
           setSuccess("We've sent a password reset link to your email. Please check your inbox.");
           setLoading(false);
@@ -71,7 +71,7 @@ export function AuthPage() {
           setLoading(false);
           return;
         }
-        result = await resett("auth.password")(resetToken, password);
+        result = await resetPassword(resetToken, password);
         if (result.success) {
           setSuccess(t("auth.reset_success"));
           setTimeout(() => {
@@ -174,7 +174,7 @@ export function AuthPage() {
                 type="text"
                 value={name}
                 onChange={(e) => { setName(e.target.value); setError(""); }}
-                placeholder=t("auth.full_name")
+                placeholder={t("auth.full_name")}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
                 required
               />
@@ -188,7 +188,7 @@ export function AuthPage() {
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                placeholder=t("auth.email_address")
+                placeholder={t("auth.email_address")}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
                 required
               />
@@ -199,20 +199,20 @@ export function AuthPage() {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <input
-                type={showt("auth.password") ? "text" : "password"}
+                type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => { sett("auth.password")(e.target.value); setError(""); }}
-                placeholder=t("auth.password")
+                onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                placeholder={t("auth.password")}
                 className="w-full pl-10 pr-12 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 outline-none focus:border-blue-500/50 transition"
                 required
                 minLength={6}
               />
               <button
                 type="button"
-                onClick={() => setShowt("auth.password")(!showt("auth.password"))}
+                onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition"
               >
-                {showt("auth.password") ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             )}
@@ -246,7 +246,7 @@ export function AuthPage() {
                 mode === "login" ? t("auth.sign_in") :
                 mode === "register" ? t("auth.create_account_btn") :
                 mode === "reset-request" ? t("auth.send_reset_link") :
-                "Reset t("auth.password")"
+                t("auth.reset_password_btn")
               )}
             </button>
           </form>

@@ -1,19 +1,19 @@
 import { t, useState, useEffect} from "react";
 import { Link } from "react-router-dom";
-import { FileText, Shield, AlertTriangle, CheckCircle, Upload, Mail, MessageSquare, Calendar, ChevronDown, Sparkles, Loader2, t("appeal.copy"), ScanEye, Zap, Brain, Eye } from "lucide-react";
+import { FileText, Shield, AlertTriangle, CheckCircle, Upload, Mail, MessageSquare, Calendar, ChevronDown, Sparkles, Loader2, ClipboardCopy, ScanEye, Zap, Brain, Eye } from "lucide-react";
 import { analyzeComplianceNotice, reviewPOA, type NoticeAnalysisResult } from "../lib/appeal-analyzer";
 
 export function Appeal() {
   const [activeTab, setActiveTab] = useState<"analyzer" | "guide" | "archive">("analyzer");
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
-  const [productType, sett("appeal.product")Type] = useState("");
-  const [reason, sett("appeal.reason")] = useState("");
-  const [actions, sett("appeal.action")s] = useState("");
-  const [language, sett("appeal.language")] = useState("en");
+  const [productType, setProductType] = useState("");
+  const [reason, setReason] = useState("");
+  const [actions, setActionss] = useState("");
+  const [language, setLanguage] = useState("en");
   const [isGenerating, setIsGenerating] = useState(false);
   const [appealResult, setAppealResult] = useState<{ rootCause?: string; poaTemplate?: string; correctiveActions?: string[]; preventiveMeasures?: string[] } | null>(null);
-  const [copied, sett("appeal.copied")] = useState(false);
-  const [downloadFormat, sett("appeal.download")Format] = useState("txt");
+  const [copied, setCopied] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState("txt");
   const [history, setHistory] = useState<Array<{ id: number; product: string; reason: string; date: string; status: "draft" | "submitted" | "approved" | "rejected" }>>([]);
 
   // Persist history to localStorage
@@ -43,7 +43,7 @@ export function Appeal() {
   const handleGenerateAppeal = async () => {
     if (!productType || !reason) return;
     setIsGenerating(true);
-    sett("appeal.copied")(false);
+    setCopied(false);
     try {
       const languageLabel: Record<string, string> = { en: "English", zh: "中文", ja: "日本語", de: t("appeal.lang_de") };
       const workerUrl = import.meta.env.VITE_WORKER_URL || "https://heguimao-api.senliri028.workers.dev";
@@ -66,10 +66,10 @@ export function Appeal() {
       setAppealResult(JSON.parse(jsonMatch[0]));
       setPreReviewResult(null);
       setHistory(prev => [{
-        id: t("appeal.date").now(),
+        id: Date.now(),
         product: productType,
         reason: reason,
-        date: new t("appeal.date")().toLocalet("appeal.date")String("en-US"),
+        date: new Date().toLocaleString("en-US"),
         status: "submitted" as const,
       }, ...prev]);
     } catch (err) {
@@ -121,8 +121,8 @@ export function Appeal() {
     if (!appealResult?.poaTemplate) return;
     const text = typeof appealResult.poaTemplate === "string" ? appealResult.poaTemplate : String(appealResult.poaTemplate);
     navigator.clipboard.writeText(text);
-    sett("appeal.copied")(true);
-    setTimeout(() => sett("appeal.copied")(false), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const downloadPOA = () => {
@@ -363,9 +363,9 @@ export function Appeal() {
                   <label className="text-sm text-slate-300 mb-1 block">t("appeal.product_type")</label>
                   <input
                     type="text"
-                    placeholder=t("appeal.placeholder_product")
+                    placeholder={t("appeal.placeholder_product")}
                     value={productType}
-                    onChange={(e) => sett("appeal.product")Type(e.target.value)}
+                    onChange={(e) => setProductType(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white placeholder-slate-500 outline-none focus:border-purple-500/50"
                   />
                 </div>
@@ -373,32 +373,32 @@ export function Appeal() {
                   <label className="text-sm text-slate-300 mb-1 block">t("appeal.removal_reason")</label>
                   <select
                     value={reason}
-                    onChange={(e) => sett("appeal.reason")(e.target.value)}
+                    onChange={(e) => setReason(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50"
                   >
                     <option value="">t("appeal.select_reason")</option>
-                    <option value=t("appeal.reason_safety")>t("appeal.reason_safety")</option>
-                    <option value=t("appeal.reason_missing_docs")>t("appeal.reason_missing_docs")</option>
-                    <option value=t("appeal.reason_labeling")>t("appeal.reason_labeling")</option>
-                    <option value=t("appeal.reason_restricted")>t("appeal.reason_restricted")</option>
-                    <option value=t("appeal.reason_ip")>t("appeal.reason_ip")</option>
-                    <option value=t("appeal.reason_miscat")>t("appeal.reason_miscat")</option>
+                    <option value={t("appeal.reason_safety")}>t("appeal.reason_safety")</option>
+                    <option value={t("appeal.reason_missing_docs")}>t("appeal.reason_missing_docs")</option>
+                    <option value={t("appeal.reason_labeling")}>t("appeal.reason_labeling")</option>
+                    <option value={t("appeal.reason_restricted")}>t("appeal.reason_restricted")</option>
+                    <option value={t("appeal.reason_ip")}>t("appeal.reason_ip")</option>
+                    <option value={t("appeal.reason_miscat")}>t("appeal.reason_miscat")</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-sm text-slate-300 mb-1 block">t("appeal.actions_taken")</label>
                   <textarea
                     rows={2}
-                    placeholder=t("appeal.placeholder_actions")
+                    placeholder={t("appeal.placeholder_actions")}
                     value={actions}
-                    onChange={(e) => sett("appeal.action")s(e.target.value)}
+                    onChange={(e) => setActionss(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white placeholder-slate-500 outline-none focus:border-purple-500/50 resize-none"
                   />
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
                     <label className="text-sm text-slate-300 mb-1 block">t("appeal.language")</label>
-                    <select value={language} onChange={(e) => sett("appeal.language")(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
+                    <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
                       <option value="en">🇺🇸 English</option>
                       <option value="zh">🇨🇳 t("appeal.lang_zh")</option>
                       <option value="ja">🇯🇵 t("appeal.lang_ja")</option>
@@ -407,7 +407,7 @@ export function Appeal() {
                   </div>
                   <div className="flex-1">
                     <label className="text-sm text-slate-300 mb-1 block">t("appeal.download")</label>
-                    <select value={downloadFormat} onChange={(e) => sett("appeal.download")Format(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
+                    <select value={downloadFormat} onChange={(e) => setDownloadFormat(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
                       <option value="txt">.txt</option>
                       <option value="html">.html</option>
                     </select>
@@ -438,7 +438,7 @@ export function Appeal() {
                         <Upload className="h-3 w-3" /> t("appeal.download")
                       </button>
                       <button onClick={copyPOA} className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition">
-                        <t("appeal.copy") className="h-3 w-3" /> {copied ? t("appeal.copied") : t("appeal.copy")}
+                        <ClipboardCopy className="h-3 w-3" /> {copied ? t("appeal.copied") : ClipboardCopy}
                       </button>
                     </div>
                   </div>
@@ -678,10 +678,10 @@ export function Appeal() {
                               item.status === "approved" ? "bg-green-500/10 text-green-400" :
                               "bg-red-500/10 text-red-400"
                             }`}>
-                              {item.status === "draft" ? "📝 t("appeal.draft")" :
-                               item.status === "submitted" ? "📤 t("appeal.submitted")" :
-                               item.status === "approved" ? "✅ t("appeal.approved")" :
-                               "❌ t("appeal.rejected")"}
+                              {item.status === "draft" ? `\uD83D\uDCCD ${t("appeal.draft")}` :
+                               item.status === "submitted" ? `\uD83D\uDCE4 ${t("appeal.submitted")}` :
+                               item.status === "approved" ? `\u2705 ${t("appeal.approved")}` :
+                               `\u274C ${t("appeal.rejected")}`}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
