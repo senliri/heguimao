@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Check, X, Star, Crown, Zap, ArrowRight, CreditCard, Shield, Clock, HelpCircle, Download, Globe } from "lucide-react";
-import { PLAN_CONFIG, upgradePlan, getSubscription, type PlanType } from "../lib/subscription";
+import { PLAN_CONFIG, upgradePlan, getSubscription, type PlanType, syncSubscriptionFromServer, upgradePlanOnServer } from "../lib/subscription";
 import { logMonitor } from "../lib/monitor";
 
 interface PaymentRecord {
@@ -25,7 +25,7 @@ export function Pricing() {
   
   const currentPlan = getSubscription().plan;
 
-  // Load payment records on mount
+  // Load payment records and sync subscription on mount
   useEffect(() => {
     try {
       const data = localStorage.getItem(PAYMENT_RECORD_KEY);
@@ -35,6 +35,8 @@ export function Pricing() {
     } catch (e) {
       console.error("Failed to load payment records", e);
     }
+    // Sync subscription from server if user is logged in
+    syncSubscriptionFromServer().catch(console.warn);
   }, []);
 
   const handleUpgrade = async (plan: PlanType) => {
@@ -50,10 +52,17 @@ export function Pricing() {
   const processPayment = async () => {
     setProcessing(true);
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate payment processing (in production, integrate Stripe/PayPal)
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Complete the upgrade
+      // Upgrade on server (source of truth)
+      const serverOk = await upgradePlanOnServer(selectedPlan);
+      if (!serverOk) {
+        alert("Server upgrade failed. Please try again.");
+        return;
+      }
+      
+      // Also update local cache
       upgradePlan(selectedPlan);
       
       // Create payment record
@@ -63,7 +72,7 @@ export function Pricing() {
         plan: selectedPlan,
         amount: PLAN_CONFIG[selectedPlan].price,
         status: "completed",
-        method: paymentMethod === "card" ? "Credit Card" : paymentMethod === "alipay" ? "Alipay" : "WeChat Pay",
+        method: paymentMethod === "card" ? "Credit Card" : paymentMethod === "paypal" ? "PayPal" : "Stripe",
       };
       
       const newRecords = [record, ...paymentRecords];

@@ -1,7 +1,8 @@
-// NOTE: Subscription limits are client-side only for now.
-// In production, enforce rate limits on the Worker side using JWT claims.
-// Users can modify localStorage to bypass limits — this is acceptable for MVP.
-// TODO: Move subscription state to Worker KV store with JWT enforcement.
+// NOTE: Subscription limits are enforced server-side via JWT + KV.
+// Client-side localStorage is a cache/optimization; the Worker is the source of truth.
+// Users can modify localStorage to bypass limits — the Worker prevents this.
+
+import { getAuthToken } from './auth';
 
 export type PlanType = "free" | "basic" | "pro";
 
@@ -127,4 +128,70 @@ export function getRemainingApiCalls(): number {
 export function getRemainingReports(): number {
   const subscription = getSubscription();
   return Math.max(0, subscription.maxReports - subscription.reportsGenerated);
+}
+
+// ─── Server-Sync ────────────────────────────────────────────────────
+
+const WORKER_URL = import.meta.env.VITE_WORKER_URL || 'https://heguimao-api.senliri028.workers.dev';
+
+export async function syncSubscriptionFromServer(): Promise<Subscription | null> {
+  const token = getAuthToken();
+  if (!token) return null;
+
+  try {
+    const response = await fetch(`${WORKER_URL}/subscription`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action: 'get' }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const subscription: Subscription = {
+      plan: data.plan || 'free',
+      apiCallsUsed: data.apiCallsUsed || 0,
+      apiCallsLimit: data.apiCallsLimit || 10,
+      maxReports: data.maxReports || 5,
+      reportsGenerated: data.reportsGenerated || 0,
+      expiresAt: null,
+      createdAt: Date.now(),
+    };
+    saveSubscription(subscription);
+    return subscription;
+  } catch (e) {
+    console.warn('Failed to sync subscription from server:', e);
+    return null;
+  }
+}
+
+export async function upgradePlanOnServer(plan: PlanType): Promise<boolean> {
+  const token = getAuthToken();
+  if (!token) return false;
+
+  try {
+    const response = await fetch(`${WORKER_URL}/subscription`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action: 'upgrade', plan }),
+    });
+
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    if (data.success) {
+      upgradePlan(plan);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn('Failed to upgrade plan on server:', e);
+    return false;
+  }
 }

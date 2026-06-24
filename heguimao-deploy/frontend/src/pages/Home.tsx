@@ -4,36 +4,33 @@ import { Sparkles, Loader2, Globe, ChevronDown, X } from "lucide-react";
 import { productCategories } from "../data/site";
 import { combinedDiagnose, type ProductProfile, type CombinedDiagnosisResult } from "../lib/agent";
 import { store, cache, type CacheStats } from "../lib/store";
+import { t, getLocale } from "../lib/i18n";
 
-const MARKET_OPTIONS = [
-  { id: "US", label: "🇺🇸 US", desc: "FDA, FCC, CPSC", group: "americas" },
-  { id: "CA", label: "🇨🇦 CA", desc: "IC, Health Canada", group: "americas" },
-  { id: "BR", label: "🇧🇷 BR", desc: "INMETRO, ANVISA", group: "americas" },
-  { id: "EU", label: "🇪🇺 EU", desc: "CE, REACH, RoHS", group: "europe" },
-  { id: "UK", label: "🇬🇧 UK", desc: "UKCA, UK REACH", group: "europe" },
-  { id: "TR", label: "🇹🇷 TR", desc: "TSE, TSEK", group: "europe" },
-  { id: "JP", label: "🇯🇵 JP", desc: "PSE, TELEC, JIS", group: "asia_pacific" },
-  { id: "KR", label: "🇰🇷 KR", desc: "KC, KCC", group: "asia_pacific" },
-  { id: "AU", label: "🇦🇺 AU", desc: "RCM, EESS", group: "asia_pacific" },
-  { id: "NZ", label: "🇳🇿 NZ", desc: "NZRC, Medsafe", group: "asia_pacific" },
-  { id: "SG", label: "🇸🇬 SG", desc: "IMDA, NEA", group: "asia_pacific" },
-  { id: "MY", label: "🇲🇾 MY", desc: "SIRIM, MCMC", group: "sea_mea" },
-  { id: "TH", label: "🇹🇭 TH", desc: "TISI, Thai FDA", group: "sea_mea" },
-  { id: "VN", label: "🇻🇳 VN", desc: "CR Mark, QC Mark", group: "sea_mea" },
-  { id: "ID", label: "🇮🇩 ID", desc: "SNI, Kominfo", group: "sea_mea" },
-  { id: "PH", label: "🇵🇭 PH", desc: "BPS, NTC", group: "sea_mea" },
-  { id: "SA", label: "🇸🇦 SA", desc: "SASO, SABER", group: "sea_mea" },
-  { id: "AE", label: "🇦🇪 AE", desc: "ESMA, TRA", group: "sea_mea" },
-  { id: "IN", label: "🇮🇳 IN", desc: "BIS, WPC", group: "sea_mea" },
-  { id: "ZA", label: "🇿🇦 ZA", desc: "SABS, ICASA", group: "sea_mea" },
+// Market data — labels/desc resolved via i18n at render time
+const MARKET_DATA = [
+  { id: "US", group: "americas" },
+  { id: "CA", group: "americas" },
+  { id: "BR", group: "americas" },
+  { id: "EU", group: "europe" },
+  { id: "UK", group: "europe" },
+  { id: "TR", group: "europe" },
+  { id: "JP", group: "asia_pacific" },
+  { id: "KR", group: "asia_pacific" },
+  { id: "AU", group: "asia_pacific" },
+  { id: "NZ", group: "asia_pacific" },
+  { id: "SG", group: "asia_pacific" },
+  { id: "MY", group: "sea_mea" },
+  { id: "TH", group: "sea_mea" },
+  { id: "VN", group: "sea_mea" },
+  { id: "ID", group: "sea_mea" },
+  { id: "PH", group: "sea_mea" },
+  { id: "SA", group: "sea_mea" },
+  { id: "AE", group: "sea_mea" },
+  { id: "IN", group: "sea_mea" },
+  { id: "ZA", group: "sea_mea" },
 ];
 
-const GROUP_LABELS: Record<string, string> = {
-  americas: "Americas",
-  europe: "Europe",
-  asia_pacific: "Asia-Pacific",
-  sea_mea: "SEA / MEA",
-};
+const GROUP_ORDER = ["americas", "europe", "asia_pacific", "sea_mea"] as const;
 
 type ConversationMessage = {
   id: string;
@@ -73,7 +70,7 @@ export function Home() {
         setMessages((prev) => [...prev, {
           id: msgId(),
           role: "assistant",
-          content: "⚡ **Cache hit!** This analysis was already computed — instant result.",
+          content: t("home.cache_hit"),
           type: "cache-hit",
         } as ConversationMessage]);
         setTimeout(() => {
@@ -139,19 +136,19 @@ export function Home() {
 
   // Filtered markets based on search
   const filteredMarkets = marketSearch
-    ? MARKET_OPTIONS.filter(m =>
-        m.label.toLowerCase().includes(marketSearch.toLowerCase()) ||
-        m.desc.toLowerCase().includes(marketSearch.toLowerCase()) ||
+    ? MARKET_DATA.filter(m =>
         m.id.toLowerCase().includes(marketSearch.toLowerCase())
       )
-    : MARKET_OPTIONS;
+    : MARKET_DATA;
 
   // Grouped filtered markets
-  const groupedMarkets = filteredMarkets.reduce<Record<string, typeof MARKET_OPTIONS>>((acc, m) => {
+  const groupedMarkets = filteredMarkets.reduce<Record<string, typeof MARKET_DATA>>((acc, m) => {
     if (!acc[m.group]) acc[m.group] = [];
     acc[m.group].push(m);
     return acc;
   }, {});
+
+  const selected = MARKET_DATA.find(m => m.id === selectedMarket);
 
   return (
     <div className="min-h-screen">
@@ -164,10 +161,10 @@ export function Home() {
             AI Compliance Checker
           </div>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-            3-Minute Compliance Check for Amazon Sellers
+            {t("home.hero_title")}
           </h1>
           <p className="mx-auto mt-3 max-w-lg text-base text-slate-400 sm:text-lg">
-            Enter your product and market — get a risk assessment, required certifications, and appeal guide
+            {t("home.hero_subtitle")}
           </p>
 
           {/* Main Input */}
@@ -175,7 +172,7 @@ export function Home() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
               <input
                 type="text"
-                placeholder="e.g. Bluetooth headphones, power bank, children's toys..."
+                placeholder={t("home.input_placeholder")}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="w-full bg-transparent px-3 py-2 text-white placeholder-slate-500 outline-none text-lg"
@@ -191,8 +188,8 @@ export function Home() {
                   >
                     <span className="flex items-center gap-1.5 truncate">
                       <Globe className="h-4 w-4" />
-                      {MARKET_OPTIONS.find(m => m.id === selectedMarket)?.label}
-                      <span className="text-xs text-slate-500">{MARKET_OPTIONS.find(m => m.id === selectedMarket)?.desc}</span>
+                      {selected && t(`market.${selected.id}`)}
+                      {selected && <span className="text-xs text-slate-500">{t(`market.${selected.id}.desc`)}</span>}
                     </span>
                     <ChevronDown className="h-3 w-3" />
                   </button>
@@ -203,7 +200,7 @@ export function Home() {
                         <div className="relative">
                           <input
                             type="text"
-                            placeholder="Search market..."
+                            placeholder={t("home.search_placeholder")}
                             value={marketSearch}
                             onChange={(e) => setMarketSearch(e.target.value)}
                             autoFocus
@@ -226,11 +223,13 @@ export function Home() {
                       </div>
                       {/* Grouped list */}
                       <div className="max-h-52 overflow-y-auto p-1">
-                        {Object.keys(groupedMarkets).length > 0 ? (
-                          Object.entries(groupedMarkets).map(([group, markets]) => (
+                        {GROUP_ORDER.map(group => {
+                          const markets = groupedMarkets[group];
+                          if (!markets || markets.length === 0) return null;
+                          return (
                             <div key={group}>
                               <div className="px-2 py-1">
-                                <span className="text-[10px] font-semibold uppercase text-slate-600">{GROUP_LABELS[group]}</span>
+                                <span className="text-[10px] font-semibold uppercase text-slate-600">{t(`market.${group}`)}</span>
                               </div>
                               {markets.map((m) => (
                                 <button
@@ -243,13 +242,15 @@ export function Home() {
                                       : "text-slate-300 hover:bg-white/10"
                                   }`}
                                 >
-                                  {m.label} <span className="text-xs text-slate-500">{m.desc}</span>
+                                  {t(`market.${m.id}`)}{" "}
+                                  <span className="text-xs text-slate-500">{t(`market.${m.id}.desc`)}</span>
                                 </button>
                               ))}
                             </div>
-                          ))
-                        ) : (
-                          <div className="px-3 py-4 text-center text-xs text-slate-500">No markets found</div>
+                          );
+                        })}
+                        {Object.keys(groupedMarkets).length === 0 && (
+                          <div className="px-3 py-4 text-center text-xs text-slate-500">{t("home.no_markets_found")}</div>
                         )}
                       </div>
                     </div>
@@ -264,7 +265,7 @@ export function Home() {
                     <Loader2 className={`h-4 w-4 ${isAnalyzing ? "animate-spin" : "opacity-0"}`} />
                     <Sparkles className={`h-4 w-4 absolute inset-0 ${isAnalyzing ? "opacity-0" : "opacity-100"}`} />
                   </span>
-                  {isAnalyzing ? "Analyzing..." : "Analyze"}
+                  {isAnalyzing ? t("home.analyzing") : t("home.analyze_btn")}
                 </button>
               </div>
             </div>
@@ -272,22 +273,21 @@ export function Home() {
 
           {/* Quick Examples */}
           <div className="mt-6">
-            <p className="text-xs text-slate-500 mb-3">Try one of these:</p>
+            <p className="text-xs text-slate-500 mb-3">{t("home.try_one")}</p>
             <div className="flex flex-wrap justify-center gap-2">
               {[
-                "Bluetooth headphones",
-                "Power bank 10000mAh",
-                "Children's plush toys",
-                "Skincare serum",
-                "Yoga mat",
+                { label: "home.quick_earbuds", hint: "home.quick_earbuds_hint" },
+                { label: "home.quick_powerbank", hint: "home.quick_powerbank_hint" },
+                { label: "home.quick_toys", hint: "home.quick_toys_hint" },
+                { label: "home.quick_cream", hint: "home.quick_cream_hint" },
               ].map((ex) => (
                 <button
-                  key={ex}
-                  onClick={() => handleQuickInput(ex)}
+                  key={ex.label}
+                  onClick={() => handleQuickInput(t(ex.label))}
                   disabled={isAnalyzing}
                   className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:bg-white/5 hover:text-white transition disabled:opacity-50"
                 >
-                  {ex}
+                  {t(ex.label)}
                 </button>
               ))}
             </div>
@@ -295,22 +295,22 @@ export function Home() {
 
           {/* Recommended Products — for Amazon sellers */}
           <div className="mt-8">
-            <p className="text-xs text-slate-500 mb-3">🔥 Hot selling products on Amazon — click to check compliance</p>
+            <p className="text-xs text-slate-500 mb-3">{t("home.hot_products")}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { emoji: "🎧", label: "Wireless Earbuds", hint: "FCC, Bluetooth, Battery" },
-                { emoji: "🔋", label: "Power Bank", hint: "UN38.3, FCC, CE" },
-                { emoji: "🧸", label: "Kids Toys", hint: "CPSIA, ASTM, EN71" },
-                { emoji: "🧴", label: "Face Cream", hint: "FDA, CPNP, INCI" },
+                { emoji: "🎧", label: "home.quick_earbuds", hint: "home.quick_earbuds_hint" },
+                { emoji: "🔋", label: "home.quick_powerbank", hint: "home.quick_powerbank_hint" },
+                { emoji: "🧸", label: "home.quick_toys", hint: "home.quick_toys_hint" },
+                { emoji: "🧴", label: "home.quick_cream", hint: "home.quick_cream_hint" },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => handleQuickInput(item.label)}
+                  onClick={() => handleQuickInput(t(item.label))}
                   disabled={isAnalyzing}
                   className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-left transition hover:border-blue-500/40 hover:bg-white/5 disabled:opacity-50"
                 >
-                  <div className="text-lg font-medium text-white">{item.emoji} {item.label}</div>
-                  <div className="text-xs text-slate-500 mt-1">{item.hint}</div>
+                  <div className="text-lg font-medium text-white">{item.emoji} {t(item.label)}</div>
+                  <div className="text-xs text-slate-500 mt-1">{t(item.hint)}</div>
                 </button>
               ))}
             </div>
@@ -349,9 +349,9 @@ export function Home() {
       <section className="mx-auto mt-10 max-w-7xl px-4 sm:px-6 pb-8">
         <div className="grid gap-3 sm:grid-cols-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
           {[
-            { icon: "🛡️", label: "Appeal Guide", desc: "Product delisted? Quick appeal plan", href: "/appeal" },
-            { icon: "📁", label: "Archive", desc: "My product records", href: "/portfolio" },
-            { icon: "📢", label: "Regulatory Updates", desc: "Latest compliance news", href: "/dashboard" },
+            { icon: "🛡️", label: "home.feature_appeal", desc: "home.feature_appeal_desc", href: "/appeal" },
+            { icon: "📁", label: "home.feature_archive", desc: "home.feature_archive_desc", href: "/portfolio" },
+            { icon: "📢", label: "home.feature_updates", desc: "home.feature_updates_desc", href: "/dashboard" },
           ].map((action) => (
             <a
               key={action.label}
@@ -362,8 +362,8 @@ export function Home() {
                 {action.icon}
               </span>
               <div className="text-left">
-                <h3 className="font-semibold text-white">{action.label}</h3>
-                <p className="text-sm text-slate-400">{action.desc}</p>
+                <h3 className="font-semibold text-white">{t(action.label)}</h3>
+                <p className="text-sm text-slate-400">{t(action.desc)}</p>
               </div>
             </a>
           ))}
@@ -373,21 +373,21 @@ export function Home() {
       {/* How It Works */}
       <section className="mx-auto mt-6 max-w-4xl px-4 sm:px-6 pb-8">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <h3 className="text-sm font-semibold text-slate-300 mb-3">How It Works</h3>
+          <h3 className="text-sm font-semibold text-slate-300 mb-3">{t("home.how_title")}</h3>
           <div className="flex items-center gap-2 text-sm text-slate-400 flex-wrap">
             <span className="flex items-center gap-1.5">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold">1</span>
-              Enter product
+              {t("home.step_enter")}
             </span>
             <span>→</span>
             <span className="flex items-center gap-1.5">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold">2</span>
-              AI analyzes
+              {t("home.step_analyze")}
             </span>
             <span>→</span>
             <span className="flex items-center gap-1.5">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold">3</span>
-              Get report
+              {t("home.step_report")}
             </span>
           </div>
         </div>

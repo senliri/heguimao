@@ -40,6 +40,94 @@ const RATE_WINDOW_MS = 60_000;  // 1 minute
 const CLEANUP_INTERVAL_MS = 300_000; // 5 minutes
 const CACHE_TTL = 3600;         // 1 hour (for KV cache)
 
+// ─── Subscription Tier Limits ───────────────────────────────────────
+
+interface SubscriptionTier {
+  plan: 'free' | 'basic' | 'pro';
+  apiCallsLimit: number;
+  maxReports: number;
+}
+
+const TIER_CONFIG: Record<string, SubscriptionTier> = {
+  free: { plan: 'free', apiCallsLimit: 10, maxReports: 5 },
+  basic: { plan: 'basic', apiCallsLimit: 100, maxReports: 50 },
+  pro: { plan: 'pro', apiCallsLimit: 1000, maxReports: 500 },
+};
+
+async function getUserSubscription(userId: string, env: Env): Promise<SubscriptionTier> {
+  const kv = (env as any).USER_DB;
+  if (!kv) return TIER_CONFIG.free;
+  
+  const key = `sub:${userId}`;
+  const raw = await kv.get(key);
+  if (!raw) return TIER_CONFIG.free;
+  
+  try {
+    const sub = JSON.parse(raw);
+    return TIER_CONFIG[sub.plan] || TIER_CONFIG.free;
+  } catch {
+    return TIER_CONFIG.free;
+  }
+}
+
+async function incrementSubscriptionUsage(userId: string, env: Env): Promise<boolean> {
+  const kv = (env as any).USER_DB;
+  if (!kv) return true; // No KV, skip enforcement
+  
+  const key = `sub:${userId}`;
+  const raw = await kv.get(key);
+  
+  let usage: { calls: number; reports: number };
+  if (raw) {
+    try {
+      usage = JSON.parse(raw);
+    } catch {
+      usage = { calls: 0, reports: 0 };
+    }
+  } else {
+    usage = { calls: 0, reports: 0 };
+  }
+  
+  const tier = await getUserSubscription(userId, env);
+  usage.calls++;
+  
+  if (usage.calls > tier.apiCallsLimit) {
+    return false; // Limit exceeded
+  }
+  
+  await kv.put(key, JSON.stringify(usage));
+  return true;
+}
+
+async function recordReport(userId: string, env: Env): Promise<boolean> {
+  const kv = (env as any).USER_DB;
+  if (!kv) return true;
+  
+  const key = `sub:${userId}`;
+  const raw = await kv.get(key);
+  
+  let usage: { calls: number; reports: number };
+  if (raw) {
+    try {
+      usage = JSON.parse(raw);
+    } catch {
+      usage = { calls: 0, reports: 0 };
+    }
+  } else {
+    usage = { calls: 0, reports: 0 };
+  }
+  
+  const tier = await getUserSubscription(userId, env);
+  usage.reports++;
+  
+  if (usage.reports > tier.maxReports) {
+    return false;
+  }
+  
+  await kv.put(key, JSON.stringify(usage));
+  return true;
+}
+
 // ─── Rate Limiter ───────────────────────────────────────────────────
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -483,7 +571,7 @@ async function callAgnesAPI(
 async function handleChat(request: Request, env: Env): Promise<Response> {
   const ip = getIP(request);
 
-  // Rate limiting
+  // Rate limiting (IP-based, always active)
   if (!checkRateLimit(ip)) {
     return json_response(
       { error: 'Rate limit exceeded. Try again later.' },
@@ -499,7 +587,35 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
     return json_response({ error: 'Invalid request body' }, 400);
   }
 
-  // Auth check
+  // ─── JWT + Subscription Enforcement ─────────────────────────────
+  let jwtPayload: { userId: string; name: string } | null = null;
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    try {
+      jwtPayload = await JWT.verify(
+        token,
+        env.JWT_SECRET || 'default-secret-change-in-production'
+      ) as { userId: string; name: string };
+    } catch {
+      // Invalid token — fall through to IP-based rate limit only
+    }
+  }
+
+  // If JWT present, enforce subscription limits
+  if (jwtPayload) {
+    const allowed = await incrementSubscriptionUsage(jwtPayload.userId, env);
+    if (!allowed) {
+      return json_response(
+        { error: 'API call limit reached. Please upgrade your plan.', plan: 'free' },
+        429
+      );
+    }
+  } else {
+    // No JWT — use IP-based rate limit (already checked above)
+  }
+
+  // Auth check (password-based, legacy)
   const authResult = await handleAuth(body, env);
   if (authResult) {
     return json_response({ error: authResult.error }, 401);
@@ -563,6 +679,11 @@ export default {
       return handleAuthAPI(request, env);
     }
 
+    // ─── Subscription API ─────────────────────────────────────────
+    if (authPath === '/subscription' && request.method === 'POST') {
+      return handleSubscriptionAPI(request, env);
+    }
+
     // Handle GET /v1/models for health check
     if (request.method === 'GET' && url.pathname === '/v1/models') {
       return json_response({ object: 'list', data: AVAILABLE_MODELS });
@@ -576,6 +697,95 @@ export default {
     return handleChat(request, env);
   },
 };
+
+// ─── Subscription Handler ───────────────────────────────────────────
+
+async function handleSubscriptionAPI(request: Request, env: Env): Promise<Response> {
+  const kv = (env as any).USER_DB;
+  if (!kv) {
+    return jsonResponse({ error: 'Subscription service not available' }, 503);
+  }
+
+  // Verify JWT
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return jsonResponse({ error: 'Authentication required' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+  let jwtPayload: { userId: string; name: string };
+  try {
+    jwtPayload = await JWT.verify(
+      token,
+      env.JWT_SECRET || 'default-secret-change-in-production'
+    ) as { userId: string; name: string };
+  } catch {
+    return jsonResponse({ error: 'Invalid token' }, 401);
+  }
+
+  const userId = jwtPayload.userId;
+  const key = `sub:${userId}`;
+
+  try {
+    const body = await request.json() as { action?: string; plan?: string };
+    const action = body.action || 'get';
+
+    if (action === 'get') {
+      // Get current subscription
+      const raw = await kv.get(key);
+      if (!raw) {
+        return jsonResponse({ plan: 'free', apiCallsUsed: 0, apiCallsLimit: 10, reportsGenerated: 0, maxReports: 5 });
+      }
+      const usage = JSON.parse(raw);
+      const tier = await getUserSubscription(userId, env);
+      return jsonResponse({
+        plan: tier.plan,
+        apiCallsUsed: usage.calls || 0,
+        apiCallsLimit: tier.apiCallsLimit,
+        reportsGenerated: usage.reports || 0,
+        maxReports: tier.maxReports,
+      });
+
+    } else if (action === 'upgrade') {
+      // Upgrade plan (in production, this would verify payment)
+      const plan = body.plan as 'basic' | 'pro';
+      if (!plan || !TIER_CONFIG[plan]) {
+        return jsonResponse({ error: 'Invalid plan' }, 400);
+      }
+      
+      // Read existing usage
+      const raw = await kv.get(key);
+      let usage: { calls: number; reports: number };
+      if (raw) {
+        try { usage = JSON.parse(raw); } catch { usage = { calls: 0, reports: 0 }; }
+      } else {
+        usage = { calls: 0, reports: 0 };
+      }
+      
+      // Save updated tier (we store the tier in the usage object)
+      await kv.put(key, JSON.stringify({ ...usage, plan, upgradedAt: Date.now() }));
+      
+      const tier = TIER_CONFIG[plan];
+      return jsonResponse({
+        success: true,
+        plan: tier.plan,
+        apiCallsLimit: tier.apiCallsLimit,
+        maxReports: tier.maxReports,
+      });
+
+    } else if (action === 'reset') {
+      // Reset usage (admin only — in production, verify admin token)
+      await kv.put(key, JSON.stringify({ calls: 0, reports: 0 }));
+      return jsonResponse({ success: true });
+    }
+
+    return jsonResponse({ error: 'Invalid action' }, 400);
+
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return jsonResponse({ error: `Server error: ${message}` }, 500);
+  }
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 

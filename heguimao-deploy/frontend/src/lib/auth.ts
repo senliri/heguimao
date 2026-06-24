@@ -440,6 +440,13 @@ export function isAuthenticated(): boolean {
 }
 
 /**
+ * Get the current auth token (JWT from backend session)
+ */
+export function getAuthToken(): string | null {
+  return getSession().token;
+}
+
+/**
  * Ensure demo/test user exists in localStorage
  * Call this on app initialization
  */
