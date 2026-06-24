@@ -248,6 +248,11 @@ interface Translations {
   "appeal.lang_de": { en: "Deutsch", zh: "德语" },
   "report.market_risks": { en: "Market Prerequisites & Business Risks", zh: "市场前置条件与商业风险" },
   "report.market_prereq": { en: "Market Prerequisites", zh: "市场前置条件" },
+  "layout.lang_en": { en: "EN", zh: "EN" },
+  "layout.lang_zh": { en: "中文", zh: "中文" },
+  "layout.home": { en: "Home", zh: "首页" },
+  "layout.appeal": { en: "Appeal Guide", zh: "申诉指南" },
+  "layout.brand": { en: "Compliance Cat — Amazon Compliance Assistant", zh: "合规猫 — 亚马逊合规助手" },
 };
 }
 
@@ -646,7 +651,6 @@ const translations: Translations = {
   "pricing.fc3a": { en: "Yes, we offer a 30-day money-back guarantee for all paid plans.", zh: "是的，所有付费方案提供 30 天退款保证。" },
   "pricing.sec": { en: "Security & Privacy", zh: "安全与隐私" },
   "pricing.sec1": { en: "All payments are encrypted and secure", zh: "所有付款均加密且安全" },
-  "pricing.sec2": { en: "We support major credit cards and digital wallets", zh: "支持主流信用卡和数字钱包" },
   "pricing.help": { en: "Need help? Contact our support team", zh: "需要帮助？联系我们的支持团队" },
   "pricing.complete": { en: "Complete Payment", zh: "完成支付" },
   "pricing.sel": { en: "Selected Plan", zh: "已选方案" },

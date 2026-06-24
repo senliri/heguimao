@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       { label: t("nav.appeal"), href: "/appeal" },
       { label: t("nav.monitor"), href: "/monitor" },
       { label: t("nav.pricing"), href: "/pricing" },
-      ...(isAdmin ? [{ label: "管理", href: "/admin" }] : []),
+      ...(isAdmin ? [{ label: t("nav.admin"), href: "/admin" }] : []),
     ];
     // Force re-read locale on every render by accessing localStorage
     try {
@@ -86,7 +86,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 to="/auth"
                 className="ml-2 rounded-lg px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
               >
-                Sign In
+                {t("auth.login")}
               </Link>
             ) : (
               <div className="flex items-center gap-2 ml-2">
@@ -100,10 +100,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <button
                   onClick={logout}
                   className="flex items-center gap-1 px-2 py-1.5 text-slate-400 hover:text-white transition rounded-lg hover:bg-white/5 text-xs"
-                  title="Sign out"
+                  title={t("layout.signout")}
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Sign out</span>
+                  <span className="hidden sm:inline">{t("layout.signout")}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -117,7 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   title="Switch language"
                 >
                   <Globe className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{lang === "zh" ? "EN" : "中文"}</span>
+                  <span className="hidden sm:inline">{lang === "zh" ? t("layout.lang_en") : t("layout.lang_zh")}</span>
                 </button>
               </div>
             )}
@@ -128,12 +128,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main>{children}</main>
 
       <footer className="border-t border-white/10 px-4 py-8 text-center text-sm text-slate-500">
-        <p>© 2026 Compliance Cat — Amazon Compliance Assistant</p>
-        <p className="mt-1">For reference only, not legal advice</p>
+        <p>© 2026 {t("layout.brand")}</p>
+        <p className="mt-1">{t("layout.note")}</p>
         <div className="mt-3 flex justify-center gap-4 text-xs text-slate-600">
-          <Link to="/" className="hover:text-slate-400">Home</Link>
-          <Link to="/report" className="hover:text-slate-400">Compliance Report</Link>
-          <Link to="/appeal" className="hover:text-slate-400">Appeal Guide</Link>
+          <Link to="/" className="hover:text-slate-400">{t("layout.home")}</Link>
+          <Link to="/report" className="hover:text-slate-400">{t("layout.rpt")}</Link>
+          <Link to="/appeal" className="hover:text-slate-400">{t("layout.appeal")}</Link>
         </div>
         <FeedbackButton onClick={() => setShowFeedback(true)} />
       </footer>
