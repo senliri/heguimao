@@ -48,9 +48,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     ];
     // Force re-read locale on every render by accessing localStorage
     try {
-      const savedLocale = localStorage.getItem("compliance_cat_locale") || "en";
-      // t() reads currentLocale which gets updated by setLocale()
-      // We need to re-sync it here
+      const savedLocale = localStorage.getItem("compliance_cat_locale");
+      if (savedLocale === "zh" || savedLocale === "en") {
+        setLocale(savedLocale);
+      }
     } catch {}
     return items;
   }, [lang, isAdmin]);

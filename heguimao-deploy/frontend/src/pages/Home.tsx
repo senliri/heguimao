@@ -4,7 +4,7 @@ import { Sparkles, Loader2, Globe, ChevronDown, X } from "lucide-react";
 import { productCategories } from "../data/site";
 import { combinedDiagnose, type ProductProfile, type CombinedDiagnosisResult } from "../lib/agent";
 import { store, cache, type CacheStats } from "../lib/store";
-import { t, getLocale } from "../lib/i18n";
+import { t, getLocale, setLocale } from "../lib/i18n";
 
 // Market data — labels/desc resolved via i18n at render time
 const MARKET_DATA = [
@@ -53,6 +53,16 @@ export function Home() {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [showChat, setShowChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Sync locale from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("compliance_cat_locale");
+      if (saved === "zh" || saved === "en") {
+        setLocale(saved);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
