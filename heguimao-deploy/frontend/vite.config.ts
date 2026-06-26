@@ -75,9 +75,15 @@ export default defineConfig({
       },
     },
   },
+  esbuild: {
+    // Preserve Unicode characters in JS bundles
+    // Without this, react-router preset strips all non-ASCII
+    charset: 'utf8',
+  },
   build: {
     outDir: "dist",
     sourcemap: false,
+    target: "es2020",
     rollupOptions: {
       output: {
         // Force all modules into single chunk to avoid i18n import issues
