@@ -74,16 +74,9 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Keep site.ts and i18n in the main app chunk — site.ts calls t() at module scope
-        // which breaks when Vite splits it into a separate chunk
+        // Force all modules into single chunk to avoid i18n import issues
         manualChunks(id) {
-          const basename = id.split('/').pop();
-          if (basename === 'site.ts' || basename === 'i18n.ts') {
-            return 'app'; // merge into main app bundle
-          }
-          if (id.includes('/data/site') || id.includes('/lib/i18n')) {
-            return 'app';
-          }
+          return 'app'; // everything goes into single app bundle
         },
       },
     },
