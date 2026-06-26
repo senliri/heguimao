@@ -2337,13 +2337,6 @@ export function t(key: string): string {
   }
   return translation.en;
 }
-/**
- * Translate a raw error string from the Worker/API into the current locale.
- * Uses exact-match first, then substring fallback.
- */
-export function translateError(rawError: string): string {
-  if (!rawError) return "";
-  
   // 1) Exact match
   for (const [key, trans] of Object.entries(translations)) {
     if (!key.startsWith("worker.err_")) continue;
