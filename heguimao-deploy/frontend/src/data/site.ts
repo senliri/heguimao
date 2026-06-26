@@ -1,5 +1,5 @@
 ﻿// Import t for compliance data translations
-import { t } from "../lib/i18n.js";
+import { t } from "../lib/i18n";
 
 // File has UTF-8 BOM (EF BB BF) — this is normal for Windows editors
 // BOM is stripped by Vite during build, no impact on functionality
