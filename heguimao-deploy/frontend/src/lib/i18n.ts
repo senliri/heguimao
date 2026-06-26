@@ -2328,7 +2328,7 @@ let zhCache: Record<string, string> | null = null;
 async function loadZhTranslations(): Promise<Record<string, string>> {
   if (zhCache) return zhCache;
   try {
-    const resp = await fetch("/translations/zh.json");
+    const resp = await fetch("/zh.json");
     zhCache = await resp.json();
   } catch {
     zhCache = {};
