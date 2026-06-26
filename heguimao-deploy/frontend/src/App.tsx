@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from "react";
+﻿import React, { Suspense, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { Layout } from "./components/Layout";
@@ -11,9 +11,8 @@ import { AuthPage } from "./pages/AuthPage";
 import { Monitor } from "./pages/Monitor";
 import { Pricing } from "./pages/Pricing";
 import { ParameterQuiz } from "./pages/ParameterQuiz";
-import { initZh } from "./lib/i18n";
 
-// Lazy-loaded routes — reduces initial bundle size
+// Lazy-loaded routes 鈥?reduces initial bundle size
 const Portfolio = React.lazy(() => import("./pages/Portfolio"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 
@@ -26,7 +25,7 @@ function PageLoader() {
   );
 }
 
-// Error boundary fallback — prevents black screen
+// Error boundary fallback 鈥?prevents black screen
 // Shows detailed error info in production for debugging
 function ErrorFallback({ error, resetErrorBoundary }: { error: Error | null; resetErrorBoundary?: () => void }) {
   const [showDetails, setShowDetails] = useState(false);
@@ -36,11 +35,11 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error | null; res
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="text-center max-w-lg w-full">
         <AlertTriangle className="h-12 w-12 text-amber-400 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">出了点问题</h2>
+        <h2 className="text-xl font-bold text-white mb-2">鍑轰簡鐐归棶棰?/h2>
         <p className="text-slate-400 mb-4">
           {isAiFormatError
-            ? "AI 返回了意外格式，可能是响应解析失败。请重试。"
-            : "页面加载时发生了错误，请刷新重试。"}
+            ? "AI 杩斿洖浜嗘剰澶栨牸寮忥紝鍙兘鏄搷搴旇В鏋愬け璐ャ€傝閲嶈瘯銆?
+            : "椤甸潰鍔犺浇鏃跺彂鐢熶簡閿欒锛岃鍒锋柊閲嶈瘯銆?}
         </p>
 
         {error && (
@@ -49,17 +48,17 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error | null; res
               onClick={() => setShowDetails(!showDetails)}
               className="mb-3 px-4 py-1.5 text-xs bg-red-900/40 text-red-300 rounded hover:bg-red-900/60 transition"
             >
-              {showDetails ? '隐藏' : '显示'} 错误详情
+              {showDetails ? '闅愯棌' : '鏄剧ず'} 閿欒璇︽儏
             </button>
             {showDetails && (
               <div className="text-left">
-                <div className="text-xs font-semibold text-red-400 mb-1">错误信息：</div>
+                <div className="text-xs font-semibold text-red-400 mb-1">閿欒淇℃伅锛?/div>
                 <pre className="text-xs text-red-300 bg-red-950/50 p-3 rounded-lg overflow-auto max-h-48 mb-3 whitespace-pre-wrap break-all">
                   {error.message}
                 </pre>
                 {error.stack && (
                   <>
-                    <div className="text-xs font-semibold text-red-400 mb-1">堆栈跟踪：</div>
+                    <div className="text-xs font-semibold text-red-400 mb-1">鍫嗘爤璺熻釜锛?/div>
                     <pre className="text-xs text-red-400 bg-red-950/30 p-3 rounded-lg overflow-auto max-h-64 whitespace-pre-wrap break-all font-mono leading-relaxed">
                       {error.stack}
                     </pre>
@@ -87,7 +86,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error | null; res
           }}
           className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition mr-2"
         >
-          刷新页面
+          鍒锋柊椤甸潰
         </button>
         <button
           onClick={() => {
@@ -96,14 +95,14 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error | null; res
           }}
           className="mt-4 px-6 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition text-sm"
         >
-          清除缓存并刷新
+          娓呴櫎缂撳瓨骞跺埛鏂?
         </button>
       </div>
     </div>
   );
 }
 
-// Protected layout wrapper — just passes through children.
+// Protected layout wrapper 鈥?just passes through children.
 // Auth loading is handled centrally by AuthProvider, not here.
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
@@ -111,8 +110,6 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
 
 export function App() {
-  // Pre-load Chinese translations on mount
-  useEffect(() => { initZh(); }, []);
   const [initError, setInitError] = useState<Error | null>(null);
   
   // Catch any initialization errors
