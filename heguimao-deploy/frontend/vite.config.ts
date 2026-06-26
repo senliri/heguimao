@@ -33,6 +33,12 @@ export default defineConfig({
         if (fs.existsSync(srcRedirects)) {
           fs.copyFileSync(srcRedirects, dstRedirects);
         }
+        // Copy _headers for CF Pages response headers
+        const srcHeaders = path.resolve(__dirname, "_headers");
+        const dstHeaders = path.join(distPath, "_headers");
+        if (fs.existsSync(srcHeaders)) {
+          fs.copyFileSync(srcHeaders, dstHeaders);
+        }
         // Also copy to public for safety
         const publicRedirects = path.resolve(__dirname, "public", "_redirects");
         if (!fs.existsSync(publicRedirects) && fs.existsSync(srcRedirects)) {
