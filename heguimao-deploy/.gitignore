@@ -1,0 +1,28 @@
+# Python test/deploy scripts (temporary, already committed)
+# *.py files excluded to prevent future accidental commits
+*.py
+
+# PowerShell scripts
+check_ts.ps1
+deploy_*.ps1
+check_deploy*.py
+build_clean*.py
+check_cf_api.py
+
+# Test results
+tsc_result.txt
+kv_result.txt
+deploy_stdout.txt
+deploy_stderr.txt
+
+# Compliance_i18n_insert.txt
+compliance_i18n_insert.txt
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# Environment files
+.env
