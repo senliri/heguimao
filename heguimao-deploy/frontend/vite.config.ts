@@ -74,11 +74,11 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Keep site.ts in the main bundle — it calls t() at module scope
+        // Keep site.ts and i18n in the main app chunk — site.ts calls t() at module scope
         // which breaks when Vite splits it into a separate chunk
         manualChunks(id) {
-          if (id.includes('/data/site.ts')) {
-            return undefined; // keep in parent chunk
+          if (id.includes('/data/site.ts') || id.includes('/data/') || id.includes('/lib/i18n')) {
+            return 'app'; // merge into main app bundle
           }
         },
       },
