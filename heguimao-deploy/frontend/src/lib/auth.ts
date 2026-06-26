@@ -1,4 +1,6 @@
 // User management module — hybrid localStorage + backend API auth
+import { translateError } from "./i18n.js";
+
 
 export interface User {
   id?: string;
@@ -137,7 +139,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 export function getUsers(): Array<{ email: string; passwordHash?: string; name: string; createdAt: number }> {
   try {
     const data = localStorage.getItem(USERS_KEY);
-    console.log('[Auth] getUsers: raw localStorage data =', data);
+
     if (!data) return [];
     const users = JSON.parse(data);
     // Data migration: ensure all users have required fields
@@ -148,7 +150,7 @@ export function getUsers(): Array<{ email: string; passwordHash?: string; name: 
       createdAt: u.createdAt || Date.now()
     }));
   } catch (e) {
-    console.error('[Auth] getUsers: error parsing users', e);
+
     return [];
   }
 }
@@ -158,7 +160,7 @@ export function getUsers(): Array<{ email: string; passwordHash?: string; name: 
  */
 export function saveUsers(users: Array<{ email: string; passwordHash: string; name: string; createdAt: number }>): void {
   try {
-    console.log('[Auth] saveUsers: saving', users.length, 'users');
+
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
   } catch (e) {
     console.warn("Failed to save users:", e);
@@ -192,7 +194,7 @@ export async function registerUser(email: string, password: string, name: string
       }));
       return { success: true, user: data.user as User };
     } else {
-      return { success: false, error: data.error };
+      return { success: false, error: translateError(data.error) };
     }
   } catch (err) {
     // Fallback to localStorage if backend is unavailable
@@ -227,7 +229,7 @@ export async function loginUser(email: string, password: string): Promise<{ succ
       }));
       return { success: true, user: data.user as User };
     } else {
-      return { success: false, error: data.error };
+      return { success: false, error: translateError(data.error) };
     }
   } catch (err) {
     // Fallback to localStorage if backend is unavailable
@@ -357,7 +359,7 @@ export async function verifySession(): Promise<{ success: boolean; user?: User; 
     } else {
       // Token invalid, clear session
       localStorage.removeItem(SESSION_KEY);
-      return { success: false, error: data.error };
+      return { success: false, error: translateError(data.error) };
     }
   } catch (err) {
     console.warn('Backend auth unavailable, using local session');
@@ -392,15 +394,15 @@ export async function logoutUser(): Promise<void> {
 export function getSession(): AuthState {
   try {
     const data = localStorage.getItem(SESSION_KEY);
-    console.log('[Auth] getSession: raw localStorage data =', data);
+
     if (!data) return { user: null, token: null, isAuthenticated: false };
     
     const session = JSON.parse(data);
-    console.log('[Auth] getSession: parsed session =', session);
+
     
     // Check if session expired
     if (Date.now() > session.expiresAt) {
-      console.log('[Auth] getSession: session expired, clearing');
+
       localStorage.removeItem(SESSION_KEY);
       return { user: null, token: null, isAuthenticated: false };
     }
@@ -410,7 +412,7 @@ export function getSession(): AuthState {
     if (session.expiresAt - Date.now() < sevenDays) {
       session.expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      console.log('[Auth] Session auto-renewed');
+
     }
     
     return {
@@ -419,7 +421,7 @@ export function getSession(): AuthState {
       isAuthenticated: true,
     };
   } catch (e) {
-    console.error('[Auth] getSession: error parsing session', e);
+
     return { user: null, token: null, isAuthenticated: false };
   }
 }

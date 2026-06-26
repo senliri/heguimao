@@ -1,4 +1,5 @@
-import { t, useState, useEffect} from "react";
+import { useState, useEffect } from 'react';
+import { t } from '../lib/i18n.js';
 import { Check, X, Star, Crown, Zap, ArrowRight, CreditCard, Shield, Clock, HelpCircle, Download, Globe } from "lucide-react";
 import { PLAN_CONFIG, upgradePlan, getSubscription, type PlanType, syncSubscriptionFromServer, upgradePlanOnServer } from "../lib/subscription";
 import { logMonitor } from "../lib/monitor";
@@ -148,8 +149,8 @@ export function Pricing() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-white mb-4">t("pricing.choose_plan")</h1>
-        <p className="text-lg text-slate-400">t("pricing.start_free")</p>
+        <h1 className="text-3xl font-bold text-white mb-4">{t("pricing.choose_plan")}</h1>
+        <p className="text-lg text-slate-400">{t("pricing.start_free")}</p>
       </div>
 
       {/* Plans Grid */}
@@ -183,7 +184,7 @@ export function Pricing() {
                 <span className="text-lg font-normal text-slate-400">/month</span>
               </div>
               {plan.price === 0 && (
-                <span className="text-sm text-slate-400">t("pricing.free_forever")</span>
+                <span className="text-sm text-slate-400">{t("pricing.free_forever")}</span>
               )}
             </div>
 
@@ -224,7 +225,7 @@ export function Pricing() {
         {showHistory && (
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-              <h3 className="text-sm font-semibold text-white">t("pricing.recent_payments")</h3>
+              <h3 className="text-sm font-semibold text-white">{t("pricing.recent_payments")}</h3>
             </div>
             <div className="divide-y divide-white/5">
               {paymentRecords.length === 0 ? (
@@ -257,37 +258,37 @@ export function Pricing() {
       {/* FAQ Section */}
       <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Frequently Asked Questions</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">{t("pricing.faq_title")}</h3>
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-medium text-white">t("pricing.faq_cancel_q")</h4>
-              <p className="text-sm text-slate-400 mt-1">t("pricing.faq_cancel_a")</p>
+              <h4 className="text-sm font-medium text-white">{t("pricing.faq_cancel_q")}</h4>
+              <p className="text-sm text-slate-400 mt-1">{t("pricing.faq_cancel_a")}</p>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-white">t("pricing.faq_limit_q")</h4>
-              <p className="text-sm text-slate-400 mt-1">t("pricing.faq_limit_a")</p>
+              <h4 className="text-sm font-medium text-white">{t("pricing.faq_limit_q")}</h4>
+              <p className="text-sm text-slate-400 mt-1">{t("pricing.faq_limit_a")}</p>
             </div>
             <div>
-              <h4 className="text-sm font-medium text-white">t("pricing.faq_refund_q")</h4>
-              <p className="text-sm text-slate-400 mt-1">t("pricing.faq_refund_a")</p>
+              <h4 className="text-sm font-medium text-white">{t("pricing.faq_refund_q")}</h4>
+              <p className="text-sm text-slate-400 mt-1">{t("pricing.faq_refund_a")}</p>
             </div>
           </div>
         </div>
         
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Security & Privacy</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">{t("pricing.privacy_title")}</h3>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-green-400" />
-              <span className="text-sm text-slate-300">t("pricing.sec_encrypted")</span>
+              <span className="text-sm text-slate-300">{t("pricing.sec_encrypted")}</span>
             </div>
             <div className="flex items-center gap-3">
               <CreditCard className="h-5 w-5 text-blue-400" />
-              <span className="text-sm text-slate-300">t("pricing.sec_cards")</span>
+              <span className="text-sm text-slate-300">{t("pricing.sec_cards")}</span>
             </div>
             <div className="flex items-center gap-3">
               <HelpCircle className="h-5 w-5 text-purple-400" />
-              <span className="text-sm text-slate-300">t("pricing.sec_help")</span>
+              <span className="text-sm text-slate-300">{t("pricing.sec_help")}</span>
             </div>
           </div>
         </div>
@@ -297,15 +298,15 @@ export function Pricing() {
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl border border-white/10 p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-white mb-4">t("pricing.complete_payment")</h3>
+            <h3 className="text-xl font-bold text-white mb-4">{t("pricing.complete_payment")}</h3>
             
             <div className="mb-6">
-              <div className="text-sm text-slate-400 mb-2">t("pricing.selected_plan")</div>
+              <div className="text-sm text-slate-400 mb-2">{t("pricing.selected_plan")}</div>
               <div className="text-lg font-medium text-white">{PLAN_CONFIG[selectedPlan].name} - ${PLAN_CONFIG[selectedPlan].price}/month</div>
             </div>
 
             <div className="mb-6">
-              <div className="text-sm text-slate-400 mb-2">t("pricing.payment_method")</div>
+              <div className="text-sm text-slate-400 mb-2">{t("pricing.payment_method")}</div>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setPaymentMethod("card")}
@@ -366,8 +367,8 @@ export function Pricing() {
             <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
               <Check className="h-8 w-8 text-green-400" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">t("pricing.success_title")</h3>
-            <p className="text-slate-400">t("pricing.success_msg")</p>
+            <h3 className="text-xl font-bold text-white mb-2">{t("pricing.success_title")}</h3>
+            <p className="text-slate-400">{t("pricing.success_msg")}</p>
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
-import { t, useState, useEffect} from "react";
+import { useState, useEffect } from 'react';
+import { t } from '../lib/i18n.js';
 import { Link } from "react-router-dom";
 import { FileText, Shield, AlertTriangle, CheckCircle, Upload, Mail, MessageSquare, Calendar, ChevronDown, Sparkles, Loader2, ClipboardCopy, ScanEye, Zap, Brain, Eye } from "lucide-react";
 import { analyzeComplianceNotice, reviewPOA, type NoticeAnalysisResult } from "../lib/appeal-analyzer";
@@ -8,7 +9,7 @@ export function Appeal() {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
   const [productType, setProductType] = useState("");
   const [reason, setReason] = useState("");
-  const [actions, setActionss] = useState("");
+  const [actions, setActions] = useState("");
   const [language, setLanguage] = useState("en");
   const [isGenerating, setIsGenerating] = useState(false);
   const [appealResult, setAppealResult] = useState<{ rootCause?: string; poaTemplate?: string; correctiveActions?: string[]; preventiveMeasures?: string[] } | null>(null);
@@ -134,7 +135,7 @@ export function Appeal() {
     const fullText = `Plan of t("appeal.action") (POA)\nt("appeal.product"): ${productType}\nt("appeal.removal_reason"): ${reason}${rootCause}${actionsList}${preventive}${text}`;
     
     if (downloadFormat === "html") {
-      const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>POA - ${productType}</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.6;}h1{color:#1e40af;}h2{color:#7c3aed;border-bottom:1px solid #e5e7eb;padding-bottom:8px;}p{margin:8px 0;}</style></head><body><h1>Plan of t("appeal.action") for ${productType}</h1><p><strong>t("appeal.removal_reason"):</strong> ${reason}</p><h2>t("appeal.root_cause")</h2>${rootCause}<h2>t("appeal.corrective_actions")</h2>${actionsList}<h2>t("appeal.preventive_measures")</h2>${preventive}${text}</body></html>`;
+      const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>POA - ${productType}</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.6;}h1{color:#1e40af;}h2{color:#7c3aed;border-bottom:1px solid #e5e7eb;padding-bottom:8px;}p{margin:8px 0;}</style></head><body><h1>Plan of {t("appeal.action")} for ${productType}</h1><p><strong>{t("appeal.removal_reason")}:</strong> ${reason}</p><h2>{t("appeal.root_cause")}</h2>${rootCause}<h2>{t("appeal.corrective_actions")}</h2>${actionsList}<h2>{t("appeal.preventive_measures")}</h2>${preventive}${text}</body></html>`;
       const blob = new Blob([htmlContent], { type: "text/html" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -188,9 +189,9 @@ export function Appeal() {
     <div>
       <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
         <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Link to="/" className="hover:text-white">Home</Link>
+          <Link to="/" className="hover:text-white">{t("nav.home")}</Link>
           <span>/</span>
-          <span className="text-slate-200">Appeal</span>
+          <span className="text-slate-200">{t("nav.appeal")}</span>
         </div>
       </section>
 
@@ -224,22 +225,22 @@ export function Appeal() {
       {activeTab === "analyzer" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
           <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-purple-500/5 p-6">
-            <h1 className="text-2xl font-bold text-cyan-300">⚡ t("appeal.smart_analyzer")</h1>
-            <p className="mt-1 text-sm text-slate-400">t("appeal.smart_analyzer_desc")</p>
+            <h1 className="text-2xl font-bold text-cyan-300">⚡ {t("appeal.smart_analyzer")}</h1>
+            <p className="mt-1 text-sm text-slate-400">{t("appeal.smart_analyzer_desc")}</p>
 
             {/* Steps */}
             <div className="mt-4 grid grid-cols-3 gap-3">
               <div className="rounded-lg bg-cyan-500/10 px-3 py-2">
                 <div className="text-xs font-bold text-cyan-300">1</div>
-                <div className="text-xs text-slate-300">t("appeal.step1")</div>
+                <div className="text-xs text-slate-300">{t("appeal.step1")}</div>
               </div>
               <div className="rounded-lg bg-cyan-500/10 px-3 py-2">
                 <div className="text-xs font-bold text-cyan-300">2</div>
-                <div className="text-xs text-slate-300">t("appeal.step2")</div>
+                <div className="text-xs text-slate-300">{t("appeal.step2")}</div>
               </div>
               <div className="rounded-lg bg-cyan-500/10 px-3 py-2">
                 <div className="text-xs font-bold text-cyan-300">3</div>
-                <div className="text-xs text-slate-300">t("appeal.step3")</div>
+                <div className="text-xs text-slate-300">{t("appeal.step3")}</div>
               </div>
             </div>
 
@@ -269,39 +270,39 @@ export function Appeal() {
                 <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-4 space-y-4">
                   <div className="flex gap-3 flex-wrap">
                     <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-xs text-slate-400">t("appeal.comp_area")</div>
+                      <div className="text-xs text-slate-400">{t("appeal.comp_area")}</div>
                       <div className="text-sm font-bold text-white">{analysisResult.complianceDimension || "—"}</div>
                     </div>
                     <div className="rounded-lg px-3 py-2">
-                      <div className="text-xs text-slate-400">t("appeal.severity")</div>
+                      <div className="text-xs text-slate-400">{t("appeal.severity")}</div>
                       <span className={`text-sm font-bold ${severityColor(analysisResult.severity || "")}`}>
                         {analysisResult.severity?.toUpperCase() || "—"}
                       </span>
                     </div>
                     <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-xs text-slate-400">t("appeal.reviewer")</div>
+                      <div className="text-xs text-slate-400">{t("appeal.reviewer")}</div>
                       <div className="text-sm font-bold text-white">{analysisResult.reviewerType || "—"}</div>
                     </div>
                     <div className="rounded-lg bg-white/5 px-3 py-2">
-                      <div className="text-xs text-slate-400">t("appeal.confidence")</div>
+                      <div className="text-xs text-slate-400">{t("appeal.confidence")}</div>
                       <div className="text-sm font-bold text-white">{analysisResult.confidence || "—"}</div>
                     </div>
                   </div>
                   {analysisResult.specificIssue && (
                     <div>
-                      <div className="text-xs font-semibold text-cyan-300 mb-1">🎯 t("appeal.specific_issue")</div>
+                      <div className="text-xs font-semibold text-cyan-300 mb-1">🎯 {t("appeal.specific_issue")}</div>
                       <div className="text-sm text-slate-300">{analysisResult.specificIssue}</div>
                     </div>
                   )}
                   {analysisResult.amazonPerspective && (
                     <div>
-                      <div className="text-xs font-semibold text-blue-300 mb-1">🤖 t("appeal.amazon_view")</div>
+                      <div className="text-xs font-semibold text-blue-300 mb-1">🤖 {t("appeal.amazon_view")}</div>
                       <div className="text-sm text-slate-300">{analysisResult.amazonPerspective}</div>
                     </div>
                   )}
                   {analysisResult.requestedEvidence && (analysisResult.requestedEvidence as string[]).length > 0 && (
                     <div>
-                      <div className="text-xs font-semibold text-yellow-300 mb-1">📋 t("appeal.requested_evidence")</div>
+                      <div className="text-xs font-semibold text-yellow-300 mb-1">📋 {t("appeal.requested_evidence")}</div>
                       <ul className="space-y-1">
                         {(analysisResult.requestedEvidence as string[]).map((e, i) => (
                           <li key={i} className="text-xs text-slate-300">• {e}</li>
@@ -309,15 +310,15 @@ export function Appeal() {
                       </ul>
                     </div>
                   )}
-                  {analysisResult.recommendedt("appeal.strategy") && (
+                  {analysisResult.recommendedStrategy && (
                     <div>
-                      <div className="text-xs font-semibold text-green-300 mb-1">💡 t("appeal.strategy")</div>
-                      <div className="text-sm text-slate-300">{analysisResult.recommendedt("appeal.strategy")}</div>
+                      <div className="text-xs font-semibold text-green-300 mb-1">💡 {t("appeal.strategy")}</div>
+                      <div className="text-sm text-slate-300">{analysisResult.recommendedStrategy}</div>
                     </div>
                   )}
                   {analysisResult.followUpQuestions && (analysisResult.followUpQuestions as string[]).length > 0 && (
                     <div>
-                      <div className="text-xs font-semibold text-purple-300 mb-1">❓ t("appeal.info_needed")</div>
+                      <div className="text-xs font-semibold text-purple-300 mb-1">❓ {t("appeal.info_needed")}</div>
                       <ul className="space-y-1">
                         {(analysisResult.followUpQuestions as string[]).map((q, i) => (
                           <li key={i} className="text-xs text-slate-300">• {q}</li>
@@ -327,7 +328,7 @@ export function Appeal() {
                   )}
                   {analysisResult.similarPastCases && (analysisResult.similarPastCases as string[]).length > 0 && (
                     <div>
-                      <div className="text-xs font-semibold text-amber-300 mb-1">📚 t("appeal.similar_cases")</div>
+                      <div className="text-xs font-semibold text-amber-300 mb-1">📚 {t("appeal.similar_cases")}</div>
                       <ul className="space-y-1">
                         {(analysisResult.similarPastCases as string[]).map((c, i) => (
                           <li key={i} className="text-xs text-slate-300">• {c}</li>
@@ -338,9 +339,9 @@ export function Appeal() {
                   <div className="pt-2 border-t border-white/10">
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle className="h-3 w-3 text-green-400" />
-                      <span className="text-xs font-semibold text-green-300">t("appeal.analysis_complete")</span>
+                      <span className="text-xs font-semibold text-green-300">{t("appeal.analysis_complete")}</span>
                     </div>
-                    <p className="text-xs text-slate-400">t("appeal.fill_details")</p>
+                    <p className="text-xs text-slate-400">{t("appeal.fill_details")}</p>
                   </div>
                 </div>
               )}
@@ -350,7 +351,7 @@ export function Appeal() {
             <div className="mt-6 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 to-blue-500/5 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-5 w-5 text-purple-400" />
-                <h2 className="text-lg font-semibold text-purple-300">t("appeal.poa_gen")</h2>
+                <h2 className="text-lg font-semibold text-purple-300">{t("appeal.poa_gen")}</h2>
                 {analysisResult && (
                   <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <CheckCircle className="h-3 w-3" />
@@ -360,7 +361,7 @@ export function Appeal() {
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm text-slate-300 mb-1 block">t("appeal.product_type")</label>
+                  <label className="text-sm text-slate-300 mb-1 block">{t("appeal.product_type")}</label>
                   <input
                     type="text"
                     placeholder={t("appeal.placeholder_product")}
@@ -370,43 +371,43 @@ export function Appeal() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-300 mb-1 block">t("appeal.removal_reason")</label>
+                  <label className="text-sm text-slate-300 mb-1 block">{t("appeal.removal_reason")}</label>
                   <select
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50"
                   >
-                    <option value="">t("appeal.select_reason")</option>
-                    <option value={t("appeal.reason_safety")}>t("appeal.reason_safety")</option>
-                    <option value={t("appeal.reason_missing_docs")}>t("appeal.reason_missing_docs")</option>
-                    <option value={t("appeal.reason_labeling")}>t("appeal.reason_labeling")</option>
-                    <option value={t("appeal.reason_restricted")}>t("appeal.reason_restricted")</option>
-                    <option value={t("appeal.reason_ip")}>t("appeal.reason_ip")</option>
-                    <option value={t("appeal.reason_miscat")}>t("appeal.reason_miscat")</option>
+                    <option value="">{t("appeal.select_reason")}</option>
+                    <option value={t("appeal.reason_safety")}>{t("appeal.reason_safety")}</option>
+                    <option value={t("appeal.reason_missing_docs")}>{t("appeal.reason_missing_docs")}</option>
+                    <option value={t("appeal.reason_labeling")}>{t("appeal.reason_labeling")}</option>
+                    <option value={t("appeal.reason_restricted")}>{t("appeal.reason_restricted")}</option>
+                    <option value={t("appeal.reason_ip")}>{t("appeal.reason_ip")}</option>
+                    <option value={t("appeal.reason_miscat")}>{t("appeal.reason_miscat")}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm text-slate-300 mb-1 block">t("appeal.actions_taken")</label>
+                  <label className="text-sm text-slate-300 mb-1 block">{t("appeal.actions_taken")}</label>
                   <textarea
                     rows={2}
                     placeholder={t("appeal.placeholder_actions")}
                     value={actions}
-                    onChange={(e) => setActionss(e.target.value)}
+                    onChange={(e) => setActions(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white placeholder-slate-500 outline-none focus:border-purple-500/50 resize-none"
                   />
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <label className="text-sm text-slate-300 mb-1 block">t("appeal.language")</label>
+                    <label className="text-sm text-slate-300 mb-1 block">{t("appeal.language")}</label>
                     <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
                       <option value="en">🇺🇸 English</option>
-                      <option value="zh">🇨🇳 t("appeal.lang_zh")</option>
-                      <option value="ja">🇯🇵 t("appeal.lang_ja")</option>
-                      <option value="de">🇩🇪 t("appeal.lang_de")</option>
+                      <option value="zh">🇨🇳 {t("appeal.lang_zh")}</option>
+                      <option value="ja">🇯🇵 {t("appeal.lang_ja")}</option>
+                      <option value="de">🇩🇪 {t("appeal.lang_de")}</option>
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="text-sm text-slate-300 mb-1 block">t("appeal.download")</label>
+                    <label className="text-sm text-slate-300 mb-1 block">{t("appeal.download")}</label>
                     <select value={downloadFormat} onChange={(e) => setDownloadFormat(e.target.value)} className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 px-4 text-white outline-none focus:border-purple-500/50">
                       <option value="txt">.txt</option>
                       <option value="html">.html</option>
@@ -432,20 +433,20 @@ export function Appeal() {
               {appealResult && (
                 <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-purple-300">t("appeal.appeal_plan")</span>
+                    <span className="text-sm font-semibold text-purple-300">{t("appeal.appeal_plan")}</span>
                     <div className="flex items-center gap-2">
                       <button onClick={downloadPOA} className="flex items-center gap-1 text-xs text-blue-400 hover:text-white transition">
-                        <Upload className="h-3 w-3" /> t("appeal.download")
+                        <Upload className="h-3 w-3" /> {t("appeal.download")}
                       </button>
                       <button onClick={copyPOA} className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition">
-                        <ClipboardCopy className="h-3 w-3" /> {copied ? t("appeal.copied") : ClipboardCopy}
+                        <ClipboardCopy className="h-3 w-3" /> {copied ? t("appeal.copied") : t("appeal.copy")}
                       </button>
                     </div>
                   </div>
                   {/* t("appeal.pre_review") */}
                   <div className="mb-3 rounded-lg bg-white/5 p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-xs font-semibold text-amber-300">🔍 t("appeal.pre_review")</h4>
+                      <h4 className="text-xs font-semibold text-amber-300">🔍 {t("appeal.pre_review")}</h4>
                       <button onClick={handlePreReview} disabled={preReviewing} className="text-xs bg-amber-600/30 text-amber-300 hover:bg-amber-600/50 px-2 py-1 rounded transition disabled:opacity-50 flex items-center gap-1">
                         <span className="relative inline-flex h-3 w-3 items-center justify-center align-middle">
                           <Loader2 className={`h-3 w-3 ${preReviewing ? 'animate-spin' : 'opacity-0'}`} />
@@ -453,7 +454,7 @@ export function Appeal() {
                         </span>
                         {preReviewing ? t("appeal.reviewing") : t("appeal.review_poa")}
                       </button>
-                      <span className="text-[10px] text-amber-500/70">t("appeal.beta")</span>
+                      <span className="text-[10px] text-amber-500/70">{t("appeal.beta")}</span>
                     </div>
                     {preReviewResult && (
                       <div className="space-y-3 text-sm">
@@ -464,40 +465,40 @@ export function Appeal() {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">t("appeal.root_cause")</div>
+                            <div className="text-xs text-slate-400">{t("appeal.root_cause")}</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.rootCauseQuality?.score || 0}/100</div>
                             {preReviewResult.rootCauseQuality?.weakness && (
                               <div className="text-xs text-slate-500">{preReviewResult.rootCauseQuality.weakness}</div>
                             )}
                           </div>
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">t("appeal.corrective_actions")</div>
+                            <div className="text-xs text-slate-400">{t("appeal.corrective_actions")}</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.correctiveActionsQuality?.score || 0}/100</div>
                             {preReviewResult.correctiveActionsQuality?.weakness && (
                               <div className="text-xs text-slate-500">{preReviewResult.correctiveActionsQuality.weakness}</div>
                             )}
                           </div>
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">t("appeal.preventive_measures")</div>
+                            <div className="text-xs text-slate-400">{t("appeal.preventive_measures")}</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.preventiveMeasuresQuality?.score || 0}/100</div>
                             {preReviewResult.preventiveMeasuresQuality?.weakness && (
                               <div className="text-xs text-slate-500">{preReviewResult.preventiveMeasuresQuality.weakness}</div>
                             )}
                           </div>
                           <div className="rounded bg-black/30 p-2">
-                            <div className="text-xs text-slate-400">t("appeal.tone_structure")</div>
+                            <div className="text-xs text-slate-400">{t("appeal.tone_structure")}</div>
                             <div className="text-sm font-bold text-white">{preReviewResult.toneAndStructure?.score || 0}/100</div>
                           </div>
                         </div>
-                        {preReviewResult.mostLikelyRejectiont("appeal.reason") && (
+                        {preReviewResult.mostLikelyRejection && (
                           <div className="rounded bg-red-500/10 p-2">
-                            <div className="text-xs text-red-300 mb-1">⚠ t("appeal.most_likely_rejection")</div>
-                            <div className="text-xs text-slate-300">{preReviewResult.mostLikelyRejectiont("appeal.reason")}</div>
+                            <div className="text-xs text-red-300 mb-1">⚠ {t("appeal.most_likely_rejection")}</div>
+                            <div className="text-xs text-slate-300">{preReviewResult.mostLikelyRejection}</div>
                           </div>
                         )}
                         {preReviewResult.redFlags && (preReviewResult.redFlags as string[]).length > 0 && (
                           <div>
-                            <div className="text-xs text-red-300 mb-1">🚩 t("appeal.red_flags")</div>
+                            <div className="text-xs text-red-300 mb-1">🚩 {t("appeal.red_flags")}</div>
                             {(preReviewResult.redFlags as string[]).map((f: string, i: number) => (
                               <div key={i} className="text-xs text-slate-300">• {f}</div>
                             ))}
@@ -505,16 +506,16 @@ export function Appeal() {
                         )}
                         {preReviewResult.topWeaknesses && (preReviewResult.topWeaknesses as string[]).length > 0 && (
                           <div>
-                            <div className="text-xs text-orange-300 mb-1">🔧 t("appeal.top_weaknesses")</div>
+                            <div className="text-xs text-orange-300 mb-1">🔧 {t("appeal.top_weaknesses")}</div>
                             {(preReviewResult.topWeaknesses as string[]).map((w: string, i: number) => (
                               <div key={i} className="text-xs text-slate-300">• {w}</div>
                             ))}
                           </div>
                         )}
-                        {preReviewResult.suggestedt("appeal.improvements") && (preReviewResult.suggestedt("appeal.improvements") as string[]).length > 0 && (
+                        {preReviewResult.suggestedImprovements && (preReviewResult.suggestedImprovements as string[]).length > 0 && (
                           <div>
-                            <div className="text-xs text-green-300 mb-1">💡 t("appeal.improvements")</div>
-                            {(preReviewResult.suggestedt("appeal.improvements") as string[]).map((s: string, i: number) => (
+                            <div className="text-xs text-green-300 mb-1">💡 {t("appeal.improvements")}</div>
+                            {(preReviewResult.suggestedImprovements as string[]).map((s: string, i: number) => (
                               <div key={i} className="text-xs text-slate-300">• {s}</div>
                             ))}
                           </div>
@@ -524,13 +525,13 @@ export function Appeal() {
                   </div>
                   {appealResult?.rootCause && (
                     <div className="mb-3">
-                      <h4 className="text-xs font-semibold text-slate-300 mb-1">📋 t("appeal.root_cause")</h4>
+                      <h4 className="text-xs font-semibold text-slate-300 mb-1">📋 {t("appeal.root_cause")}</h4>
                       <p className="text-sm text-slate-300">{appealResult.rootCause}</p>
                     </div>
                   )}
                   {appealResult?.poaTemplate && (
                     <div className="mb-3 rounded-lg bg-white/5 p-3">
-                      <h4 className="text-xs font-semibold text-blue-300 mb-2">📝 t("appeal.letter")</h4>
+                      <h4 className="text-xs font-semibold text-blue-300 mb-2">📝 {t("appeal.letter")}</h4>
                       <div className="text-sm text-slate-200 whitespace-pre-wrap max-h-64 overflow-y-auto">
                         {appealResult.poaTemplate}
                       </div>
@@ -538,7 +539,7 @@ export function Appeal() {
                   )}
                   {appealResult.correctiveActions && (appealResult.correctiveActions as string[]).length > 0 && (
                     <div className="mb-2">
-                      <h4 className="text-xs font-semibold text-green-300 mb-1">✅ t("appeal.corrective_actions")</h4>
+                      <h4 className="text-xs font-semibold text-green-300 mb-1">✅ {t("appeal.corrective_actions")}</h4>
                       {(appealResult.correctiveActions as string[]).map((a, i) => (
                         <p key={i} className="text-xs text-slate-300 mb-1">• {String(a)}</p>
                       ))}
@@ -546,7 +547,7 @@ export function Appeal() {
                   )}
                   {appealResult.preventiveMeasures && (
                     <div className="mb-2">
-                      <h4 className="text-xs font-semibold text-amber-300 mb-1">🛡️ t("appeal.preventive_measures")</h4>
+                      <h4 className="text-xs font-semibold text-amber-300 mb-1">🛡️ {t("appeal.preventive_measures")}</h4>
                       {appealResult.preventiveMeasures!.map((p, i) => (
                         <p key={i} className="text-xs text-slate-300 mb-1">• {p}</p>
                       ))}
@@ -563,12 +564,12 @@ export function Appeal() {
       {activeTab === "guide" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            <h1 className="text-2xl font-bold">Amazon t("appeal.tab_guide")</h1>
-            <p className="mt-1 text-sm text-slate-400">t("appeal.guide_desc")</p>
+            <h1 className="text-2xl font-bold">Amazon {t("appeal.tab_guide")}</h1>
+            <p className="mt-1 text-sm text-slate-400">{t("appeal.guide_desc")}</p>
 
             {/* Common t("appeal.removal_reason")s */}
             <div className="mt-6">
-              <h2 className="text-lg font-semibold">Common t("appeal.removal_reason")s</h2>
+              <h2 className="text-lg font-semibold">Common {t("appeal.removal_reason")}s</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {[
                   { title: t("appeal.reason_product_safety"), desc: t("appeal.desc_product_safety") },
@@ -591,7 +592,7 @@ export function Appeal() {
 
             {/* t("appeal.steps") */}
             <div className="mt-8">
-              <h2 className="text-lg font-semibold">t("appeal.steps")</h2>
+              <h2 className="text-lg font-semibold">{t("appeal.steps")}</h2>
               <div className="mt-4 space-y-3">
                 {[
                   { step: 1, title: t("appeal.step_identify_title"), desc: t("appeal.desc_identify") },
@@ -615,7 +616,7 @@ export function Appeal() {
 
             {/* FAQ */}
             <div className="mt-8">
-              <h2 className="text-lg font-semibold">t("appeal.faq")</h2>
+              <h2 className="text-lg font-semibold">{t("appeal.faq")}</h2>
               <div className="mt-4 space-y-2">
                 {[
                   { q: t("appeal.faq_rejected_q"), a: t("appeal.faq_rejected_a") },
@@ -648,21 +649,21 @@ export function Appeal() {
       {activeTab === "archive" && (
         <section className="mx-auto mt-6 max-w-7xl px-4 pb-16 sm:px-6">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            <h1 className="text-2xl font-bold">Compliance t("appeal.tab_archive")</h1>
-            <p className="mt-1 text-sm text-slate-400">t("appeal.archive_desc")</p>
+            <h1 className="text-2xl font-bold">Compliance {t("appeal.tab_archive")}</h1>
+            <p className="mt-1 text-sm text-slate-400">{t("appeal.archive_desc")}</p>
 
             {history.length > 0 && (
               <div className="mt-6">
-                <h2 className="text-lg font-semibold mb-3">t("appeal.history")</h2>
+                <h2 className="text-lg font-semibold mb-3">{t("appeal.history")}</h2>
                 <div className="overflow-x-auto rounded-xl border border-white/10">
                   <table className="w-full text-sm">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.date")</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.product")</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.reason")</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">t("appeal.status")</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">t("appeal.action")</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">{t("appeal.date")}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">{t("appeal.product")}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">{t("appeal.reason")}</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase">{t("appeal.status")}</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase">{t("appeal.action")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -685,7 +686,7 @@ export function Appeal() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button onClick={() => deleteHistory(item.id)} className="text-xs text-slate-500 hover:text-red-400 transition">t("appeal.delete")</button>
+                            <button onClick={() => deleteHistory(item.id)} className="text-xs text-slate-500 hover:text-red-400 transition">{t("appeal.delete")}</button>
                           </td>
                         </tr>
                       ))}
@@ -698,8 +699,8 @@ export function Appeal() {
             {history.length === 0 && (
               <div className="mt-8 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
                 <FileText className="mx-auto h-12 w-12 text-slate-500" />
-                <h3 className="mt-4 text-lg font-medium text-slate-300">t("appeal.no_records")</h3>
-                <p className="mt-2 text-sm text-slate-500">t("appeal.records_saved")</p>
+                <h3 className="mt-4 text-lg font-medium text-slate-300">{t("appeal.no_records")}</h3>
+                <p className="mt-2 text-sm text-slate-500">{t("appeal.records_saved")}</p>
                 <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">
                   <CheckCircle className="h-4 w-4" />
                   t("appeal.start_new")

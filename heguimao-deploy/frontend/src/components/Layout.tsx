@@ -61,8 +61,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-2xl">🐱</span>
-            <span className="text-lg font-bold tracking-tight">{siteConfig.name}</span>
-            <span className="hidden text-sm text-slate-400 sm:inline">{siteConfig.tagline}</span>
+            <span className="text-lg font-bold tracking-tight">{t("site.name")}</span>
+            <span className="hidden text-sm text-slate-400 sm:inline">{t("site.tagline")}</span>
           </Link>
           <nav className="flex items-center gap-1 overflow-x-auto text-sm sm:gap-2">
             {navItems.map((item) => {

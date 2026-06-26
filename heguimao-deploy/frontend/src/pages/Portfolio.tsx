@@ -1,3 +1,4 @@
+import { t } from "../lib/i18n.js";
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Package, Plus, Trash2, Search, Filter, Download, Clock, AlertCircle, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, Bell, OctagonAlert, Hourglass } from "lucide-react";
@@ -111,11 +112,11 @@ export function Portfolio() {
   const statusBadge = (status: string) => {
     switch (status) {
       case "compliant":
-        return { color: "bg-green-500/10 text-green-400 border-green-500/20", icon: "🟢", label: "Compliant" };
+        return { color: "bg-green-500/10 text-green-400 border-green-500/20", icon: "🟢", label: t("portfolio.status_compliant") };
       case "in-progress":
-        return { color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20", icon: "🟡", label: "In Progress" };
+        return { color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20", icon: "🟡", label: t("portfolio.status_in_progress") };
       case "not-checked":
-        return { color: "bg-red-500/10 text-red-400 border-red-500/20", icon: "🔴", label: "Not Checked" };
+        return { color: "bg-red-500/10 text-red-400 border-red-500/20", icon: "🔴", label: t("portfolio.status_not_checked") };
       default:
         return { color: "bg-slate-500/10 text-slate-400", icon: "⚪", label: status };
     }

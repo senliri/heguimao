@@ -1,4 +1,5 @@
-import { t, useState, useEffect} from "react";
+import { useState, useEffect } from 'react';
+import { t } from '../lib/i18n.js';
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle, User as UserIcon, ArrowLeft } from "lucide-react";
 import { registerUser, loginUser, requestPasswordReset, verifyResetToken, resetPassword, type User, getSession } from "../lib/auth";
@@ -115,13 +116,13 @@ export function AuthPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/20 mb-4">
             <span className="text-3xl">🐱</span>
           </div>
-          <h1 className="text-3xl font-bold text-white">Compliance Cat</h1>
+          <h1 className="text-3xl font-bold text-white">{t("auth.brand")}</h1>
           <p className="text-slate-400 mt-2">
             {mode === "login" ? t("auth.sign_in_account") : 
              mode === "register" ? t("auth.create_account") :
              mode === "reset-request" ? t("auth.reset_password") :
              mode === "reset-password" ? t("auth.set_new_password") :
-             "Compliance Cat"}
+             t("auth.brand")}
           </p>
         </div>
 

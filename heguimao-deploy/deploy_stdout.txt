@@ -1,0 +1,14 @@
+
+ âï¸ wrangler 4.103.0
+ââââââââââââââââââââ
+â¨ Compiled Worker successfully
+Uploading... (12/14)
+Uploading... (13/14)
+Uploading... (14/14)
+â¨ Success! Uploaded 2 files (12 already uploaded) (2.10 sec)
+
+â¨ Uploading Functions bundle
+â¨ Uploading _routes.json
+ð Deploying...
+â¨ Deployment complete! Take a peek over at https://a669e2bd.heguimao.pages.dev
+â¨ Deployment alias URL: https://master.heguimao.pages.dev

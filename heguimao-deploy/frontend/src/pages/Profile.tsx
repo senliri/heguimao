@@ -1,4 +1,5 @@
-import { t, useState} from "react";
+import { useState } from 'react';
+import { t } from '../lib/i18n.js';
 import { useAuth } from "../components/AuthGate";
 import { logoutUser, getCurrentUser, getUsers, saveUsers, verifyPassword, enhancedHash } from "../lib/auth";
 import { User, Mail, Calendar, Clock, Shield, LogOut, Key, Edit2, Crown, Zap, Star } from "lucide-react";
@@ -81,14 +82,14 @@ export function Profile() {
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
         <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <Edit2 className="h-4 w-4" />
-          t("profile.account_info")
+          {t("profile.account_info")}
         </h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
             <Mail className="h-4 w-4 text-blue-400 flex-shrink-0" />
             <div>
-              <div className="text-xs text-slate-500">t("profile.email")</div>
+              <div className="text-xs text-slate-500">{t("profile.email")}</div>
               <div className="text-sm text-white">{user.email}</div>
             </div>
           </div>
@@ -96,7 +97,7 @@ export function Profile() {
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
             <Calendar className="h-4 w-4 text-blue-400 flex-shrink-0" />
             <div>
-              <div className="text-xs text-slate-500">t("profile.member_since")</div>
+              <div className="text-xs text-slate-500">{t("profile.member_since")}</div>
               <div className="text-sm text-white">{new Date(user.createdAt).toLocaleDateString()}</div>
             </div>
           </div>
@@ -104,7 +105,7 @@ export function Profile() {
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
             <Clock className="h-4 w-4 text-blue-400 flex-shrink-0" />
             <div>
-              <div className="text-xs text-slate-500">t("profile.last_login")</div>
+              <div className="text-xs text-slate-500">{t("profile.last_login")}</div>
               <div className="text-sm text-white">{new Date(user.lastLogin).toLocaleString()}</div>
             </div>
           </div>
@@ -112,23 +113,23 @@ export function Profile() {
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
             <Shield className="h-4 w-4 text-blue-400 flex-shrink-0" />
             <div>
-              <div className="text-xs text-slate-500">t("profile.user_id")</div>
+              <div className="text-xs text-slate-500">{t("profile.user_id")}</div>
               <div className="text-sm text-white font-mono">{user.id}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* t("profile.subscription") Info */}
+      {/* Subscription Info */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">t("profile.subscription")</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t("profile.subscription")}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-blue-500/10">
               <Crown className="h-5 w-5 text-blue-400" />
             </div>
             <div>
-              <div className="text-sm text-slate-400">t("profile.current_plan")</div>
+              <div className="text-sm text-slate-400">{t("profile.current_plan")}</div>
               <div className="text-white font-medium capitalize">{getSubscription().plan}</div>
             </div>
           </div>
@@ -137,7 +138,7 @@ export function Profile() {
               <Zap className="h-5 w-5 text-green-400" />
             </div>
             <div>
-              <div className="text-sm text-slate-400">t("profile.api_used")</div>
+              <div className="text-sm text-slate-400">{t("profile.api_used")}</div>
               <div className="text-white font-medium">{getSubscription().apiCallsUsed} / {getSubscription().apiCallsLimit}</div>
             </div>
           </div>
@@ -146,7 +147,7 @@ export function Profile() {
               <Star className="h-5 w-5 text-purple-400" />
             </div>
             <div>
-              <div className="text-sm text-slate-400">t("profile.reports_generated")</div>
+              <div className="text-sm text-slate-400">{t("profile.reports_generated")}</div>
               <div className="text-white font-medium">{getSubscription().reportsGenerated} / {getSubscription().maxReports}</div>
             </div>
           </div>
@@ -155,21 +156,21 @@ export function Profile() {
               <Calendar className="h-5 w-5 text-orange-400" />
             </div>
             <div>
-              <div className="text-sm text-slate-400">t("profile.expires")</div>
-              <div className="text-white font-medium">{gett("profile.subscription")().expiresAt ? new Date(getSubscription().expiresAt).toLocaleDateString() : t("profile.never")}</div>
+              <div className="text-sm text-slate-400">{t("profile.expires")}</div>
+              <div className="text-white font-medium">{getSubscription().expiresAt ? new Date(getSubscription().expiresAt).toLocaleDateString() : t("profile.never")}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* t("profile.change_password") */}
+      {/* Change Password */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <button
           onClick={() => setShowChangePassword(!showChangePassword)}
           className="flex items-center gap-2 text-lg font-semibold text-white w-full"
         >
           <Key className="h-4 w-4" />
-          t("profile.change_password")
+          {t("profile.change_password")}
           <span className="ml-auto text-slate-400">{showChangePassword ? "▲" : "▼"}</span>
         </button>
         
@@ -214,19 +215,19 @@ export function Profile() {
 
       {/* Stats */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">t("profile.statistics")</h2>
+        <h2 className="text-lg font-semibold text-white mb-4">{t("profile.statistics")}</h2>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="p-3 rounded-xl bg-white/5">
             <div className="text-2xl font-bold text-blue-400">-</div>
-            <div className="text-xs text-slate-500 mt-1">t("profile.diagnoses")</div>
+            <div className="text-xs text-slate-500 mt-1">{t("profile.diagnoses")}</div>
           </div>
           <div className="p-3 rounded-xl bg-white/5">
             <div className="text-2xl font-bold text-amber-400">-</div>
-            <div className="text-xs text-slate-500 mt-1">t("profile.appeals")</div>
+            <div className="text-xs text-slate-500 mt-1">{t("profile.appeals")}</div>
           </div>
           <div className="p-3 rounded-xl bg-white/5">
             <div className="text-2xl font-bold text-green-400">-</div>
-            <div className="text-xs text-slate-500 mt-1">t("profile.reports")</div>
+            <div className="text-xs text-slate-500 mt-1">{t("profile.reports")}</div>
           </div>
         </div>
       </div>
@@ -237,7 +238,7 @@ export function Profile() {
         className="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-3 text-sm font-medium text-red-400 transition hover:bg-red-500/20 flex items-center justify-center gap-2"
       >
         <LogOut className="h-4 w-4" />
-        t("profile.sign_out")
+        {t("profile.sign_out")}
       </button>
     </div>
   );

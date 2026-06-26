@@ -1,21 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://mini-disco.vercel.app/</loc>
-    <lastmod>2026-06-15</lastmod>
+    <loc>https://master.heguimao.pages.dev/</loc>
+    <lastmod>2026-06-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://mini-disco.vercel.app/report</loc>
-    <lastmod>2026-06-15</lastmod>
+    <loc>https://master.heguimao.pages.dev/report</loc>
+    <lastmod>2026-06-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mini-disco.vercel.app/appeal</loc>
-    <lastmod>2026-06-15</lastmod>
+    <loc>https://master.heguimao.pages.dev/appeal</loc>
+    <lastmod>2026-06-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://master.heguimao.pages.dev/pricing</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://master.heguimao.pages.dev/profile</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://master.heguimao.pages.dev/auth</loc>
+    <lastmod>2026-06-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

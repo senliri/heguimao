@@ -31,4 +31,4 @@ id = "0eec625e553540d9bd1507f2a56fbdd9"
 # Subscription usage KV namespace (separate from USER_DB)
 [[kv_namespaces]]
 binding = "SUB_DB"
-id = "0eec625e553540d9bd1507f2a56fbdd9"
+id = "72f2a6d1111745cca8d4142b7d4197e8"

@@ -58,14 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     
     const initAuth = async () => {
-      console.log('[Auth] initAuth: starting');
+
       // Ensure demo user exists on first load
       await ensureDemoUser();
       
       // Check session on mount
       const session = getSession();
-      console.log('[Auth] initAuth: session=', session);
-      console.log('[Auth] initAuth: localStorage session=', localStorage.getItem('compliance_cat_session'));
+
+
       if (session.isAuthenticated && session.user && !cancelled) {
         setUser(session.user);
         setIsAuthenticated(true);
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session.isAuthenticated && session.user) {
           setUser(session.user);
           setIsAuthenticated(true);
-          console.log('[Auth] Session changed, updated state');
+
         } else if (!session.isAuthenticated) {
           setUser(null);
           setIsAuthenticated(false);

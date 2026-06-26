@@ -1,3 +1,4 @@
+import { t } from "../lib/i18n.js";
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Package, Search, Filter, Download, BarChart3, TrendingUp, Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -294,9 +295,9 @@ export function Dashboard() {
                 <tbody className="divide-y divide-white/5">
                   {filteredProducts.map((product) => {
                     const statusMap = {
-                      compliant: { emoji: "🟢", label: "Compliant", color: "text-green-400" },
-                      "in-progress": { emoji: "🟡", label: "In Progress", color: "text-yellow-400" },
-                      "not-checked": { emoji: "🔴", label: "Not Checked", color: "text-red-400" },
+                      compliant: { emoji: "🟢", label: t("dashboard.status_compliant"), color: "text-green-400" },
+                      "in-progress": { emoji: "🟡", label: t("dashboard.status_in_progress"), color: "text-yellow-400" },
+                      "not-checked": { emoji: "🔴", label: t("dashboard.status_not_checked"), color: "text-red-400" },
                     };
                     const status = statusMap[product.complianceStatus] || statusMap["not-checked"];
                     return (

@@ -112,7 +112,7 @@ export function Home() {
       setMessages((prev) => [...prev, {
         id: msgId(),
         role: "assistant",
-        content: "Sorry, encountered an issue: " + (err instanceof Error ? err.message : String(err)),
+        content: `${t("home.error_encountered")} ${(err instanceof Error ? err.message : String(err))}`,
         type: "error",
       }]);
     } finally {

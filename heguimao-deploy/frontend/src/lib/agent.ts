@@ -1,6 +1,7 @@
 // AI Agent core logic — calls Cloudflare Worker in prod, Agnes API directly in dev
 
 import { PROFILE_EXTRACTION_PROMPT, DIAGNOSIS_PROMPT, APPEAL_PROMPT, SHORT_REPLY_PROMPT } from "./prompts";
+import { t } from "./i18n.js";
 import { cache } from "./store";
 import { categoryComplianceData } from "../data/site";
 import { logMonitor } from "./monitor";
@@ -502,14 +503,14 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
   if (USE_DIRECT_API) {
     // Direct mode: call Agnes API via Vite proxy (/v1 -> apihub.agnes-ai.com)
     if (!AGNES_API_KEY) {
-      throw new Error('VITE_AGNES_API_KEY environment variable is not set. Please configure the API key in your deployment environment.');
+      throw new Error(t("agent.env_not_set"));
     }
-    console.log('[Agent] Using direct API mode (Worker bypass)');
+
     logMonitor({ type: "info", category: "api", message: `API call: ${endpoint} (direct mode)` });
     
     // Check subscription limits
     if (!canMakeApiCall()) {
-      throw new Error('API limit reached. Please upgrade your plan.');
+      throw new Error(t("agent.api_limit"));
     }
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -539,9 +540,9 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn('[Agent] Direct API call failed:', response.status, errorText);
+
       logMonitor({ type: "error", category: "api", message: `API call failed: ${endpoint}`, details: { status: response.status, error: errorText } });
-      throw new Error('AI service temporarily unavailable');
+      throw new Error(t("agent.service_unavailable"));
     }
 
     const data = await response.json();
@@ -550,11 +551,10 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
     incrementApiCall();
   } else {
     // Worker proxy mode — key is hidden on server side, no client key needed
-    console.log('[Agent] Calling API via Worker proxy:', AGNES_PROXY_URL);
+
     logMonitor({ type: "info", category: "api", message: `API call: ${endpoint} (worker proxy)` });
     const requestBody = { action: endpoint, prompt: params.prompt as string || '', message: (params.message as string) || '', temperature: 0.3 };
-    console.log('[Agent] Request body length:', JSON.stringify(requestBody).length);
-    console.log('[Agent] Request body action:', requestBody.action);
+
     const response = await fetch(AGNES_PROXY_URL, {
       method: 'POST',
       headers: {
@@ -566,8 +566,8 @@ async function callAI<T>(endpoint: string, params: Record<string, unknown>): Pro
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn('[Agent] Worker proxy call failed:', response.status, errorText);
-      throw new Error('AI service temporarily unavailable');
+
+      throw new Error(t("agent.service_unavailable"));
     }
 
     const data = await response.json();
@@ -593,7 +593,7 @@ function parseAIResponse<T>(text: string): T {
 
   const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error("AI returned unexpected format");
+    throw new Error(t("agent.unexpected_format"));
   }
 
   const parsed = JSON.parse(jsonMatch[0]);
@@ -1225,7 +1225,7 @@ export async function combinedDiagnose(
     try {
       cache.setDiagnosis(userMessage, targetMarket, staticResult);
     } catch (e) {
-      console.warn("[Agent] Static cache write failed:", e);
+
     }
     return staticResult;
   }
@@ -1336,7 +1336,7 @@ Key risk factors to consider:
     try {
       cache.setDiagnosis(userMessage, targetMarket, finalResult);
     } catch (e) {
-      console.warn("[Agent] Cache write failed:", e);
+
     }
     
     return finalResult;

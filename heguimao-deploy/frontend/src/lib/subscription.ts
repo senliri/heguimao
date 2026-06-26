@@ -3,6 +3,7 @@
 // Users can modify localStorage to bypass limits — the Worker prevents this.
 
 import { getAuthToken } from './auth';
+import { translateError } from "./i18n.js";
 
 export type PlanType = "free" | "basic" | "pro";
 
@@ -189,7 +190,7 @@ export async function upgradePlanOnServer(plan: PlanType): Promise<{ success: bo
       let errorMsg = 'Upgrade failed';
       try {
         const data = await response.json();
-        errorMsg = data.error || errorMsg;
+        errorMsg = translateError(data.error) || errorMsg;
       } catch { /* ignore parse error */ }
       console.error(`Subscription upgrade failed: HTTP ${response.status} - ${errorMsg}`);
       return { success: false, error: errorMsg };
@@ -200,7 +201,7 @@ export async function upgradePlanOnServer(plan: PlanType): Promise<{ success: bo
       upgradePlan(plan);
       return { success: true };
     }
-    return { success: false, error: data.error || 'Unknown error' };
+    return { success: false, error: translateError(data.error) || 'Unknown error' };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('Subscription upgrade error:', msg);
