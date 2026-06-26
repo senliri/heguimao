@@ -77,8 +77,14 @@ export default defineConfig({
         // Keep site.ts and i18n in the main app chunk — site.ts calls t() at module scope
         // which breaks when Vite splits it into a separate chunk
         manualChunks(id) {
-          if (id.includes('/data/site.ts') || id.includes('/data/') || id.includes('/lib/i18n')) {
+          // Match by filename (robust across OS/path variations)
+          const basename = id.split('/').pop();
+          if (basename === 'site.ts' || basename === 'i18n.ts') {
             return 'app'; // merge into main app bundle
+          }
+          // Also match by path segments (forward slash for Linux builds)
+          if (id.includes('/data/site') || id.includes('/lib/i18n')) {
+            return 'app';
           }
         },
       },
