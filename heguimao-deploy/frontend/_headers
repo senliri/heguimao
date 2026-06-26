@@ -1,0 +1,10 @@
+/*
+  X-Robots-Tag: noindex
+
+/assets/*.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/assets/*.css
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
