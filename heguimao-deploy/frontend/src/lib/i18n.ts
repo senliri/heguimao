@@ -2315,6 +2315,13 @@ const translations: Translations = {
 
 // Current locale state
 let currentLocale: Locale = "en";
+// Initialize locale from localStorage on module load
+if (typeof document !== "undefined") {
+  const saved = localStorage.getItem("compliance_cat_locale");
+  if (saved === "zh" || saved === "en") {
+    currentLocale = saved;
+  }
+}
 
 export function setLocale(locale: Locale): void {
   currentLocale = locale;
