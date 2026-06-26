@@ -2323,6 +2323,19 @@ if (typeof document !== "undefined") {
   }
 }
 
+// Lazy-loaded Chinese translations (loaded on first zh request)
+let zhCache: Record<string, string> | null = null;
+async function loadZhTranslations(): Promise<Record<string, string>> {
+  if (zhCache) return zhCache;
+  try {
+    const resp = await fetch("/translations/zh.json");
+    zhCache = await resp.json();
+  } catch {
+    zhCache = {};
+  }
+  return zhCache;
+}
+
 export function setLocale(locale: Locale): void {
   currentLocale = locale;
   localStorage.setItem("compliance_cat_locale", locale);
@@ -2347,7 +2360,16 @@ export function t(key: string): string {
     console.warn(`Translation key not found: ${key}`);
     return key;
   }
-  return translation[currentLocale];
+  if (currentLocale === "zh") {
+    if (zhCache) return zhCache[key] || key;
+    return key;
+  }
+  return translation.en;
+}
+
+// Pre-load Chinese translations on page init
+export async function initZh(): Promise<void> {
+  await loadZhTranslations();
 }
 
 /**

@@ -11,6 +11,7 @@ import { AuthPage } from "./pages/AuthPage";
 import { Monitor } from "./pages/Monitor";
 import { Pricing } from "./pages/Pricing";
 import { ParameterQuiz } from "./pages/ParameterQuiz";
+import { initZh } from "./lib/i18n";
 
 // Lazy-loaded routes — reduces initial bundle size
 const Portfolio = React.lazy(() => import("./pages/Portfolio"));
@@ -110,6 +111,8 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
 
 export function App() {
+  // Pre-load Chinese translations on mount
+  useEffect(() => { initZh(); }, []);
   const [initError, setInitError] = useState<Error | null>(null);
   
   // Catch any initialization errors
