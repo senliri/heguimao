@@ -39,7 +39,7 @@ const translations: Translations = {
   "appeal.archive_title": { en: "Compliance Archive", zh: "\u5408\u89c4\u5f52\u6863" },
   "appeal.archive_desc": { en: "Manage your product compliance records and historical check reports", zh: "\u7ba1\u7406\u4ea7\u54c1\u5408\u89c4\u8bb0\u5f55\u548c\u5386\u53f2\u68c0\u67e5\u62a5\u544a" },
   "appeal.smart_analyzer": { en: "Smart Appeal Analyzer", zh: "\u667a\u80fd\u7533\u8bc9\u5206\u6790\u5668" },
-  "appeal.smart_analyzer_desc": { en: "Paste your Amazon compliance notice ->AI identifies the issue, analyzes severity, and auto-generates a targeted appeal letter.", zh: "\u7c98\u8d34\u4e9a\u9a6c\u900a\u5408\u89c4\u901a\u77e5 →AI \u8bc6\u522b\u95ee\u9898銆乗\u5206\u6790\u4e25\u91cd\u6027:孿\u81ea\u52a8\u751f\u6210\u9488\u5bf9\u6027\u7533\u8bc9\u4fe1銆? "},
+  "appeal.smart_analyzer_desc": { en: "Paste your Amazon compliance notice ->AI identifies the issue, analyzes severity, and auto-generates a targeted appeal letter.", zh: "\u7c98\u8d34\u4e9a\u9a6c\u900a\u5408\u89c4\u901a\u77e5 ->AI \u8bc6\u522b\u95ee\u9898銆乗\u5206\u6790\u4e25\u91cd\u6027:孿\u81ea\u52a8\u751f\u6210\u9488\u5bf9\u6027\u7533\u8bc9\u4fe1銆? "},
   "appeal.step1": { en: "Paste notice", zh: "\u7c98\u8d34\u901a\u77e5" },
   "appeal.step2": { en: "AI analyzes issue", zh: "AI \u5206\u6790\u95ee\u9898" },
   "appeal.step3": { en: "Fill form & generate POA", zh: "\u586b\u5199\u8868\u5355\u5e76\u751f\u6210 POA" },
@@ -173,7 +173,7 @@ const translations: Translations = {
   "auth.send_reset_link": { en: "Send Reset Link", zh: "\u53d1\u9001\u91cd\u7f6e\u94fe\u63a5" },
   "auth.reset_password_btn": { en: "Reset Password", zh: "\u91cd\u7f6e\u5bc6\u7801" },
   "auth.password_hint": { en: "Password must be at least 6 characters long", zh: "\u5bc6\u7801\u81f3\u5c11\u9700\u8981 6 \u4e2a\u5b57\u7b26" },
-  "auth.footer": { en: "Powered by Agnes AI ->Compliance Cat", zh: "\u7531 Agnes AI \u9a71\u52a8 →Compliance Cat" },
+  "auth.footer": { en: "Powered by Agnes AI ->Compliance Cat", zh: "\u7531 Agnes AI \u9a71\u52a8 ->Compliance Cat" },
   "auth.checking": { en: "Checking authentication...", zh: "\u6b63\u5728\u68c0\u67e5\u8ba4\u8bc1..." },
   "pricing.already_on_plan": { en: "You're already on this plan!", zh: "\u60a8\u5df2\u5728\u5f53\u524d\u5957\u9910:" },
   "pricing.server_upgrade_fail": { en: "Server upgrade failed. Please try again.", zh: "\u670d\u52a1\u5668\u5347\u7ea7\u5931\u8d25:孿\u8bf7\u91cd\u8bd5銆? "},
@@ -257,7 +257,7 @@ const translations: Translations = {
   "layout.lang_zh": { en: "\u4e2d\u6587", zh: "\u4e2d\u6587" },
   "layout.home": { en: "Home", zh: "\u9996\u9875" },
   "layout.appeal": { en: "Appeal Guide", zh: "\u7533\u8bc9\u6307\u5357" },
-  "layout.brand": { en: "Compliance Cat ->Amazon Compliance Assistant", zh: "\u5408\u89c4\u732b →\u4e9a\u9a6c\u900a\u5408\u89c4\u52a9\u624b" },
+  "layout.brand": { en: "Compliance Cat ->Amazon Compliance Assistant", zh: "\u5408\u89c4\u732b ->\u4e9a\u9a6c\u900a\u5408\u89c4\u52a9\u624b" },
   // Navigation
   "nav.home": { en: "Home", zh: "\u9996\u9875" },
   "nav.report": { en: "Compliance Report", zh: "\u5408\u89c4\u62a5\u544a" },
@@ -377,14 +377,14 @@ const translations: Translations = {
 // Home Page (extended)
   "report.est_time": { en: "Est. time", zh: "\u9884\u8ba1\u65f6\u95f4" },
   "home.hero_title": { en: "3-Minute Compliance Check for Amazon Sellers", zh: "\u4e9a\u9a6c\u900a\u5356\u5bb63\u5206\u949f\u5408\u89c4\u68c0\u67e5" },
-  "home.hero_subtitle": { en: "Enter your product and market ->get a risk assessment, required certifications, and appeal guide", zh: "\u8f93\u5165\u4ea7\u54c1\u548c\u5e02\u573a →\u83b7\u53d6\u98ce\u9669\u8bc4\u4f30銆乗\u6240\u9700\u8ba4\u8bc1\u548c\u7533\u8bc9\u6307\u5357" },
+  "home.hero_subtitle": { en: "Enter your product and market ->get a risk assessment, required certifications, and appeal guide", zh: "\u8f93\u5165\u4ea7\u54c1\u548c\u5e02\u573a ->\u83b7\u53d6\u98ce\u9669\u8bc4\u4f30銆乗\u6240\u9700\u8ba4\u8bc1\u548c\u7533\u8bc9\u6307\u5357" },
   "home.input_placeholder": { en: "e.g. Bluetooth headphones, power bank, children's toys...", zh: "\u4f8b\u5982:歕\u84dd\u7259\u8033\u673a銆乗\u5145\u7535\u5b9d銆乗\u513f\u7ae5\u73a9\u5177..." },
   "home.market_select": { en: "Market", zh: "\u5e02\u573a" },
   "home.analyze_btn": { en: "Analyze", zh: "\u5206\u6790" },
   "home.error_encountered": { en: "Sorry, encountered an issue: ", zh: "\u62b1\u6b49:孿\u9047\u5230\u4e86\u4e00\u4e9b\u95ee\u9898:" },
   "home.analyzing": { en: "Analyzing...", zh: "\u5206\u6790\u4e2d..." },
   "home.try_one": { en: "Try one of these:", zh: "\u8bd5\u8bd5\u8fd9\u4e9b:" },
-  "home.hot_products": { en: "Hot selling products on Amazon ->click to check compliance", zh: "\u4e9a\u9a6c\u900a\u70ed\u9500\u4ea7\u54c1 →\u70b9\u51fb\u68c0\u67e5\u5408\u89c4" },
+  "home.hot_products": { en: "Hot selling products on Amazon ->click to check compliance", zh: "\u4e9a\u9a6c\u900a\u70ed\u9500\u4ea7\u54c1 ->\u70b9\u51fb\u68c0\u67e5\u5408\u89c4" },
   "home.quick_earbuds": { en: "Wireless Earbuds", zh: "\u65e0\u7ebf\u8033\u673a" },
   "home.quick_earbuds_hint": { en: "FCC, Bluetooth, Battery", zh: "FCC銆乗\u84dd\u7259銆乗\u7535\u6c60" },
   "home.quick_powerbank": { en: "Power Bank", zh: "\u5145\u7535\u5b9d" },
@@ -393,7 +393,7 @@ const translations: Translations = {
   "home.quick_toys_hint": { en: "CPSIA, ASTM, EN71", zh: "CPSIA銆丄STM銆丒N71" },
   "home.quick_cream": { en: "Face Cream", zh: "\u9762\u971c" },
   "home.quick_cream_hint": { en: "FDA, CPNP, INCI", zh: "FDA銆丆PNP銆両NCI" },
-  "home.cache_hit": { en: "??Cache hit! This analysis was already computed ->instant result.", zh: "鈿?\u547d\u4e2d\u7f13\u5b58:乗\u8be5\u5206\u6790\u5df2\u8ba1\u7b97 →\u5373\u65f6\u7ed3\u679c" },
+  "home.cache_hit": { en: "??Cache hit! This analysis was already computed ->instant result.", zh: "鈿?\u547d\u4e2d\u7f13\u5b58:乗\u8be5\u5206\u6790\u5df2\u8ba1\u7b97 ->\u5373\u65f6\u7ed3\u679c" },
   "home.no_markets_found": { en: "No markets found", zh: "\u672a\u627e\u5230\u5e02\u573a" },
   "home.search_placeholder": { en: "Search market...", zh: "\u641c\u7d22\u5e02\u573a..." },
   "home.feature_appeal": { en: "Appeal Guide", zh: "\u7533\u8bc9\u6307\u5357" },
@@ -588,7 +588,7 @@ const translations: Translations = {
   "report.lab_eurofins": { en: "Food/cosmetics", zh: "\u98df\u54c1/\u5316\u5986\u54c1" },
   "report.biggest_impact": { en: "These items have the biggest impact", zh: "\u8fd9\u4e9b\u9879\u76ee\u5f71\u54cd\u6700\u5927" },
   "report.improve_compliance": { en: "Improve compliance completeness", zh: "\u63d0\u5347\u5408\u89c4\u5b8c\u6574\u6027" },
-  "report.link": { en: "→", zh: "→" },
+  "report.link": { en: "->", zh: "->" },
   "report.ai_recommendation": { en: "AI Recommendation", zh: "AI \u63a8\u8350" },
   "report.third_party_test": { en: "Third-party test", zh: "\u7b2c\u4e09\u65b9\u68c0\u6d4b" },
   "report.recommendations": { en: "Recommendations", zh: "\u63a8\u8350" },
@@ -2114,11 +2114,10 @@ const translations: Translations = {
 
   "dashboard.status_compliant": { en: "Compliant", zh: "\u5408\u89c4" },
   "dashboard.status_in_progress": { en: "In Progress", zh: "\u8fdb\u884c\u4e2d" },
-  "dashboard.status_not_checked": { en: "Not Checked",
+  "dashboard.status_not_checked": { en: "Not Checked", zh: "\u672a\u68c0\u67e5" },
   "portfolio.status_compliant": { en: "Compliant", zh: "\u5408\u89c4" },
   "portfolio.status_in_progress": { en: "In Progress", zh: "\u8fdb\u884c\u4e2d" },
   "portfolio.status_not_checked": { en: "Not Checked", zh: "\u672a\u68c0\u67e5" },
- zh: "\u672a\u68c0\u67e5" },
 // Dynamic data translations (generated from site.ts)
   "market.label.us": { en: "United States", zh: "United States" },
   "market.label.eu": { en: "European Union", zh: "European Union" },
@@ -2336,27 +2335,6 @@ export function t(key: string): string {
     return zhTranslations[key] || key;
   }
   return translation.en;
-}
-  // 1) Exact match
-  for (const [key, trans] of Object.entries(translations)) {
-    if (!key.startsWith("worker.err_")) continue;
-    if (trans.en === rawError) return trans[currentLocale];
-  }
-  
-  // 2) Substring match (handles dynamic messages like "Server error: ...")
-  if (rawError.startsWith("Server error: ") || rawError.startsWith("AI service error: ")) {
-    const prefix = rawError.substring(0, rawError.indexOf(": ") + 2);
-    const suffix = rawError.substring(prefix.length);
-    if (rawError.startsWith("Server error: ")) {
-      return `${translations["worker.err_server"][currentLocale]}: ${suffix}`;
-    }
-    if (rawError.startsWith("AI service error: ")) {
-      return `${translations["worker.err_ai_service"][currentLocale]} ${suffix}`;
-    }
-  }
-  
-  // 3) Fallback: return original
-  return rawError;
 }
 
 export function isZh(): boolean {
