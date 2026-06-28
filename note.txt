@@ -1,0 +1,24 @@
+import subprocess
+result = subprocess.run(
+    ["git", "show", "HEAD:./frontend/src/lib/i18n.ts"],
+    capture_output=True,
+    cwd=r"D:\qclaw\workspace-AI工程师\heguimao-deploy"
+)
+lines = result.stdout.split(b"\n")
+line591 = lines[590]
+print(f"Git line 591: {repr(line591)}")
+
+# The issue: U+922B (锛) is different from U+951B (锛)
+# U+922B = 3 bytes: e9 88 ab
+# U+951B = 3 bytes: e9 94 9b
+# My fix_v10 replaced U+951B with ： and U+922B with →
+# But the ? after U+922B was NOT handled because I only had 锛? (U+951B + ?) pattern
+
+# Check: what's the actual byte after the arrow in line 591?
+#锛 = e9 88 ab (U+922B)
+# After锛: 3f (?)
+#锛 = e9 94 9b (U+951B)
+# After锛: 3f (?)
+
+# Both have ? after them! But my fix only handled 锛? (U+951B + ?)
+# I need to handle BOTH patterns

@@ -54,6 +54,9 @@ task-summary_2026-06-15_1455.md
 # Allow mini-disco to have its own files
 !mini-disco/package.json
 !mini-disco/package-lock.json
+# Allow heguimao frontend to have its own files
+!heguimao-deploy/frontend/package.json
+!heguimao-deploy/frontend/package-lock.json
 !mini-disco/tsconfig*.json
 !mini-disco/vercel.json
 !mini-disco/*.md
