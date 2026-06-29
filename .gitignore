@@ -62,3 +62,10 @@ task-summary_2026-06-15_1455.md
 !mini-disco/*.md
 !mini-disco/*.config.*
 !mini-disco/*.json
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
