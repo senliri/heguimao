@@ -2306,12 +2306,66 @@ import { zhTranslations } from "../data/zh-translations";
 
 // Current locale state
 let currentLocale: Locale = "en";
+
+/**
+ * Set the current locale and persist to localStorage.
+ */
+export function setLocale(locale: Locale): void {
+  currentLocale = locale;
+  localStorage.setItem("compliance_cat_locale", locale);
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = locale;
+  }
+}
+
+/**
+ * Get the current locale, initializing from localStorage if needed.
+ */
+export function getLocale(): Locale {
+  if (typeof document !== "undefined") {
+    const saved = localStorage.getItem("compliance_cat_locale");
+    if (saved === "zh" || saved === "en") {
+      currentLocale = saved;
+    }
+  }
+  return currentLocale;
+}
+
 // Initialize locale from localStorage on module load
 if (typeof document !== "undefined") {
   const saved = localStorage.getItem("compliance_cat_locale");
   if (saved === "zh" || saved === "en") {
     currentLocale = saved;
   }
+}
+
+/**
+ * Translate a raw error string from the Worker/API into the current locale.
+ * Uses exact-match first, then substring fallback.
+ */
+export function translateError(rawError: string): string {
+  if (!rawError) return "";
+  
+  // 1) Exact match
+  for (const [key, trans] of Object.entries(translations)) {
+    if (!key.startsWith("worker.err_")) continue;
+    if (trans.en === rawError) return trans[currentLocale];
+  }
+  
+  // 2) Substring match (handles dynamic messages like "Server error: ...")
+  if (rawError.startsWith("Server error: ") || rawError.startsWith("AI service error: ")) {
+    const prefix = rawError.substring(0, rawError.indexOf(": ") + 2);
+    const suffix = rawError.substring(prefix.length);
+    if (rawError.startsWith("Server error: ")) {
+      return `${translations["worker.err_server"][currentLocale]}: ${suffix}`;
+    }
+    if (rawError.startsWith("AI service error: ")) {
+      return `${translations["worker.err_ai_service"][currentLocale]} ${suffix}`;
+    }
+  }
+  
+  // 3) Fallback: return original
+  return rawError;
 }
 
 export function t(key: string): string {
